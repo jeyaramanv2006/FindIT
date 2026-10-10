@@ -1,0 +1,8 @@
+# Scratchpads and raw notes
+notes/
+
+# Stitch
+Stitch/
+
+# Internal documentation and agent configuration
+.agents/
