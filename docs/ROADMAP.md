@@ -1,8 +1,8 @@
 # Project Roadmap & Implementation Milestones — FindIT
 
-> **Current Status**: `MILESTONES 1 & 2 COMPLETED` | `MILESTONE 3 PENDING START`  
+> **Current Status**: `MILESTONES 1, 2 & 3 COMPLETED` | `MILESTONE 4 PENDING START`  
 > **Frontend Design Status**: `COMPLETED IN GOOGLE STITCH & INTEGRATED`  
-> **Backend & Integration Status**: `MILESTONES 1 & 2 RUNTIME & SUITE VERIFIED (127.0.0.1:8000)`  
+> **Backend & Integration Status**: `MILESTONES 1–3 RUNTIME & SUITE VERIFIED (127.0.0.1:8000)`  
 
 ---
 
@@ -51,15 +51,15 @@ gantt
   - Store registered directories in SQLite.
 - **Exit Criteria**: User can register a local directory and view discovered document counts in the database.
 
-### Milestone 3 — Extraction & Structure-Aware Passages
+### Milestone 3 — Extraction & Structure-Aware Passages (`COMPLETED`)
 - **Scope**:
   - Implement format extractors with structural coordinate tracking:
-    - PDF (`pypdf` / `pymupdf`): Page numbers and page counts.
+    - PDF (`pymupdf`): Page numbers and page counts.
     - PPTX (`python-pptx`): Slide numbers and titles.
     - Markdown & Plain Text: 1-indexed line ranges and heading paths.
     - DOCX: Section headings and paragraph indices.
-  - Implement structure-aware chunking engine (~250–500 tokens, 20% overlap).
-  - Persist extracted passages and source locations into SQLite `passages` table.
+  - Implement structure-aware chunking engine (~350 tokens, 50-token overlap).
+  - Ensure zero text bleeding across PPTX slide boundaries and PDF pages.
 - **Exit Criteria**: Stored passages possess verifiable, trustworthy source location labels.
 
 ### Milestone 4 — Semantic Vector Indexing

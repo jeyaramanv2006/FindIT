@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.1.0-m3] - 2026-10-11
+
+### Completed
+- **Milestone 3 & Batch 2 (Phases 3, 4, 5) — Multi-Format Extraction & Structure-Aware Chunking**:
+  - Implemented `BaseExtractor`, `ExtractedBlock`, and `ExtractedDocument` contracts in `backend/app/extractors/base.py`.
+  - Implemented `TextExtractor` in `backend/app/extractors/text_extractor.py` parsing `.txt`, `.md`, `.markdown`, source code (`.py`, `.ts`, `.js`, etc.), and config (`.json`, `.yaml`, `.toml`) with exact 1-indexed line numbers, markdown heading hierarchy stacks, and code symbol boundaries.
+  - Implemented `PDFExtractor` in `backend/app/extractors/pdf_extractor.py` using PyMuPDF (`pymupdf`) extracting text per page with 1-indexed page coordinates (`Page X of Y`), paragraph grouping, and scanned non-text PDF fallback detection (`NO_TEXT`).
+  - Implemented `DocxExtractor` in `backend/app/extractors/docx_extractor.py` using `python-docx` extracting headings, paragraphs, and tables with section hierarchy retention.
+  - Implemented `PptxExtractor` in `backend/app/extractors/pptx_extractor.py` using `python-pptx` extracting slide titles, body shapes, and speaker notes with strict slide coordinate isolation (`Slide X`).
+  - Implemented extractor factory in `backend/app/extractors/factory.py` resolving appropriate extractors by file extension.
+  - Implemented `StructureAwareChunker` in `backend/app/chunking/chunker.py` using a 350-token window with 50-token overlap, ensuring zero text bleeding across PPTX slides, preserving PDF page numbers, and attaching exact 1-indexed line ranges and parent headings.
+  - Added unit test suites `backend/tests/test_extractors.py` (9 tests) and `backend/tests/test_chunker.py` (5 tests). Entire backend test suite passes with **26/26 tests passing**.
+
 ## [0.1.0-m2] - 2026-10-11
 
 ### Completed
