@@ -91,7 +91,32 @@ All 4xx and 5xx responses return a consistent error envelope:
 }
 ```
 
-### 2.4 Trigger Directory Sync
+### 2.4 List Tracked Documents in a Directory
+- **Endpoint**: `GET /api/directories/{directory_id}/documents`
+- **Description**: Returns all tracked files within a registered folder, including filename, size, extraction status, and passage counts.
+- **Response**: `200 OK`
+```json
+{
+  "directory_id": "dir_e4f5a6",
+  "documents": [
+    {
+      "document_id": "doc_123456",
+      "directory_id": "dir_e4f5a6",
+      "canonical_path": "C:/Users/name/Documents/lecture.pdf",
+      "filename": "lecture.pdf",
+      "extension": ".pdf",
+      "file_type": "pdf",
+      "size_bytes": 1048576,
+      "modified_time": 1728000000,
+      "extraction_status": "OK",
+      "last_indexed_at": "2026-10-11T12:00:00Z",
+      "passage_count": 42
+    }
+  ]
+}
+```
+
+### 2.5 Trigger Directory Sync
 - **Endpoint**: `POST /api/directories/{directory_id}/sync`
 - **Description**: Starts an incremental synchronization job for a single registered directory.
 - **Response**: `202 Accepted`

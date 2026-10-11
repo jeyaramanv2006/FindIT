@@ -284,6 +284,53 @@ class DirectoryService:
                 }
                 for row in rows
             ]
+    @staticmethod
+    def list_documents(directory_id: str) -> list[dict]:
+        """
+        Returns all tracked documents in a registered directory, including
+        filename, relative/canonical path, extension, status, and passage count.
+        """
+        with get_db() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                SELECT 
+                    d.document_id,
+                    d.directory_id,
+                    d.canonical_path,
+                    d.filename,
+                    d.extension,
+                    d.file_type,
+                    d.size_bytes,
+                    d.modified_time,
+                    d.extraction_status,
+                    d.last_indexed_at,
+                    COUNT(p.chunk_id) AS passage_count
+                FROM documents d
+                LEFT JOIN passages p ON d.document_id = p.document_id
+                WHERE d.directory_id = ?
+                GROUP BY d.document_id
+                ORDER BY d.filename ASC;
+                """,
+                (directory_id,),
+            )
+            rows = cursor.fetchall()
+            return [
+                {
+                    "document_id": row["document_id"],
+                    "directory_id": row["directory_id"],
+                    "canonical_path": row["canonical_path"],
+                    "filename": row["filename"],
+                    "extension": row["extension"],
+                    "file_type": row["file_type"],
+                    "size_bytes": row["size_bytes"],
+                    "modified_time": row["modified_time"],
+                    "extraction_status": row["extraction_status"],
+                    "last_indexed_at": row["last_indexed_at"],
+                    "passage_count": row["passage_count"],
+                }
+                for row in rows
+            ]
 
     @staticmethod
     def delete_directory(directory_id: str) -> bool:

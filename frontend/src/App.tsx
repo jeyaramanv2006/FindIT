@@ -4,6 +4,7 @@ import { RankingPopover } from './components/RankingPopover';
 import { SearchResultCard } from './components/SearchResultCard';
 import { PassageInspectorModal } from './components/PassageInspectorModal';
 import { DirectoriesModal } from './components/DirectoriesModal';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import type { SearchResult, PassageDetail, IndexedDirectory, SyncJob, HealthStatus } from './types';
 import {
   searchPassages,
@@ -608,24 +609,28 @@ export function App() {
       )}
 
       {/* PASSAGE INSPECTION MODAL */}
-      <PassageInspectorModal
-        passage={selectedPassage}
-        query={activeQuery}
-        onClose={() => setSelectedPassage(null)}
-        onOpenFolder={handleOpenFolder}
-      />
+      <ErrorBoundary fallbackTitle="Could not load passage detail" onReset={() => setSelectedPassage(null)}>
+        <PassageInspectorModal
+          passage={selectedPassage}
+          query={activeQuery}
+          onClose={() => setSelectedPassage(null)}
+          onOpenFolder={handleOpenFolder}
+        />
+      </ErrorBoundary>
 
       {/* INDEXED DIRECTORIES MANAGEMENT MODAL */}
-      <DirectoriesModal
-        isOpen={foldersModalOpen}
-        onClose={() => setFoldersModalOpen(false)}
-        directories={directories}
-        onAddDirectory={handleAddDirectory}
-        onSyncDirectory={handleSyncDirectory}
-        onSyncAll={handleSyncAll}
-        onRemoveDirectory={handleRemoveDirectory}
-        activeJob={activeJob}
-      />
+      <ErrorBoundary fallbackTitle="Could not load directories dialog" onReset={() => setFoldersModalOpen(false)}>
+        <DirectoriesModal
+          isOpen={foldersModalOpen}
+          onClose={() => setFoldersModalOpen(false)}
+          directories={directories}
+          onAddDirectory={handleAddDirectory}
+          onSyncDirectory={handleSyncDirectory}
+          onSyncAll={handleSyncAll}
+          onRemoveDirectory={handleRemoveDirectory}
+          activeJob={activeJob}
+        />
+      </ErrorBoundary>
     </div>
   );
 }

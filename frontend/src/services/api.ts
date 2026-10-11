@@ -1,4 +1,4 @@
-import type { SearchResult, PassageDetail, IndexedDirectory, HealthStatus, SyncJob } from '../types';
+import type { SearchResult, PassageDetail, IndexedDirectory, TrackedDocument, HealthStatus, SyncJob } from '../types';
 
 // Use relative API base path proxied through Vite dev server to FastAPI backend
 const API_BASE_URL = '/api';
@@ -86,6 +86,22 @@ export async function getIndexedDirectories(): Promise<IndexedDirectory[]> {
     }
   } catch (err) {
     loggerFallback('getIndexedDirectories', err);
+  }
+  return [];
+}
+
+/**
+ * Fetches all tracked files within a specific directory.
+ */
+export async function getDirectoryDocuments(directoryId: string): Promise<TrackedDocument[]> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/directories/${directoryId}/documents`);
+    if (response.ok) {
+      const data = await response.json();
+      return data.documents || [];
+    }
+  } catch (err) {
+    loggerFallback('getDirectoryDocuments', err);
   }
   return [];
 }

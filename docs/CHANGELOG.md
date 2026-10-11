@@ -21,6 +21,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Latency benchmarking: benchmarked 1,000 indexed passages across 20 hybrid search queries, achieving mean latency of **29.36 ms** (p95: 32.95 ms), well under the strict 100ms threshold.
     - Global exception handling middleware: structured JSON envelopes for 404 Not Found, 422 Unprocessable Entity, and 500 Internal Server Error.
     - Temporary file defense: Hardened scanner to ignore Microsoft Office temporary lock files (`~$*`) and Unix dotfiles (`.*`) in `ScannerService` and `DirectoryService`.
+    - Directory Document Inspection Feature: Implemented `GET /api/directories/{directory_id}/documents` endpoint in `backend/app/api/directories.py` and `DirectoryService.list_documents`.
+    - Added interactive "View files" / "Hide files" expandable accordion drawer in frontend `DirectoriesModal.tsx`, showing live per-file icons, exact filename, formatted size, and status badges (`Indexed (N passages)`, `Pending sync`, `Failed / Locked`, `Skipped (>50MB)`, `No text layer`).
   - Added global error-handling middleware in `backend/app/main.py`.
   - Added `MAX_FILE_SIZE_BYTES = 50MB` setting in `backend/app/core/config.py`.
   - Upgraded `OSService.validate_path_confinement` to normalize both `str` and `Path` inputs.

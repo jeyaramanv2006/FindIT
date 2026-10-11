@@ -88,6 +88,16 @@ def delete_directory(directory_id: str):
         )
 
 
+@router.get("/{directory_id}/documents")
+def list_directory_documents(directory_id: str):
+    """
+    Returns the list of all tracked documents inside a registered directory,
+    including filename, status, and passage counts.
+    """
+    docs = DirectoryService.list_documents(directory_id)
+    return {"directory_id": directory_id, "documents": docs}
+
+
 @router.post("/{directory_id}/sync")
 def sync_directory(directory_id: str):
     """

@@ -39,6 +39,20 @@ export interface PassageDetail {
   lexical_rank?: number;
 }
 
+export interface TrackedDocument {
+  document_id: string;
+  directory_id: string;
+  canonical_path: string;
+  filename: string;
+  extension: string;
+  file_type: string;
+  size_bytes: number;
+  modified_time: number;
+  extraction_status: 'OK' | 'NO_TEXT' | 'ERROR' | 'UNSUPPORTED' | 'SKIPPED_TOO_LARGE' | string;
+  last_indexed_at?: string | null;
+  passage_count: number;
+}
+
 export interface IndexedDirectory {
   directory_id: string;
   canonical_path: string;

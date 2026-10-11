@@ -34,6 +34,17 @@ def test_register_and_list_directory():
         assert len(matched) == 1
         assert matched[0]["file_count"] == 3
 
+        # List documents in directory
+        docs_resp = client.get(f"/api/directories/{dir_id}/documents")
+        assert docs_resp.status_code == 200
+        docs_data = docs_resp.json()
+        assert docs_data["directory_id"] == dir_id
+        assert len(docs_data["documents"]) == 3
+        filenames = {d["filename"] for d in docs_data["documents"]}
+        assert "notes.txt" in filenames
+        assert "guide.md" in filenames
+        assert "script.py" in filenames
+
         # Clean up
         del_resp = client.delete(f"/api/directories/{dir_id}")
         assert del_resp.status_code == 200

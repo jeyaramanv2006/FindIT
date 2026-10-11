@@ -1,6 +1,6 @@
-import React, { useState, useRef } from 'react';
-import type { IndexedDirectory, SyncJob } from '../types';
-import { pickNativeFolder } from '../services/api';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import type { IndexedDirectory, TrackedDocument, SyncJob } from '../types';
+import { pickNativeFolder, getDirectoryDocuments } from '../services/api';
 
 interface DirectoriesModalProps {
   isOpen: boolean;
@@ -26,12 +26,49 @@ export const DirectoriesModal: React.FC<DirectoriesModalProps> = ({
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [newPathInput, setNewPathInput] = useState('');
   const [showManualInput, setShowManualInput] = useState(false);
+  const [expandedDirectoryId, setExpandedDirectoryId] = useState<string | null>(null);
+  const [directoryDocs, setDirectoryDocs] = useState<Record<string, TrackedDocument[]>>({});
+  const [loadingDocsId, setLoadingDocsId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const loadDocumentsForDirectory = useCallback(async (dirId: string) => {
+    setLoadingDocsId(dirId);
+    try {
+      const docs = await getDirectoryDocuments(dirId);
+      setDirectoryDocs((prev) => ({ ...prev, [dirId]: docs }));
+    } catch (err) {
+      console.warn('Failed to fetch documents for directory', dirId, err);
+    } finally {
+      setLoadingDocsId(null);
+    }
+  }, []);
+
+  // Re-fetch documents for the expanded directory when an active sync completes
+  useEffect(() => {
+    if (isOpen && expandedDirectoryId && !activeJob) {
+      loadDocumentsForDirectory(expandedDirectoryId);
+    }
+  }, [isOpen, expandedDirectoryId, activeJob, loadDocumentsForDirectory]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    if (isOpen) {
+      document.addEventListener('keydown', handleKeyDown);
+    }
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
-  const totalFolders = directories.length;
-  const totalFiles = directories.reduce((acc, d) => acc + d.file_count, 0);
+  const safeDirectories = Array.isArray(directories) ? directories : [];
+  const totalFolders = safeDirectories.length;
+  const totalFiles = safeDirectories.reduce((acc, d) => acc + (d?.file_count || 0), 0);
 
   // File Explorer directory selection
   const handleBrowseFolder = async () => {
@@ -88,13 +125,28 @@ export const DirectoriesModal: React.FC<DirectoriesModalProps> = ({
     }
   };
 
+  const handleToggleExpand = (dirId: string) => {
+    if (expandedDirectoryId === dirId) {
+      setExpandedDirectoryId(null);
+    } else {
+      setExpandedDirectoryId(dirId);
+      loadDocumentsForDirectory(dirId);
+    }
+  };
+
   return (
     <div
       role="dialog"
       aria-modal="true"
       aria-labelledby="directoriesModalTitle"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto bg-[#1f1b18]/30 backdrop-blur-[2px] transition-all duration-200"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6"
     >
+      {/* Backdrop */}
+      <div
+        className="modal-backdrop fixed inset-0 transition-opacity"
+        onClick={onClose}
+      />
+
       {/* Hidden file input for native folder picker */}
       <input
         ref={fileInputRef}
@@ -108,9 +160,9 @@ export const DirectoriesModal: React.FC<DirectoriesModalProps> = ({
       />
 
       {/* Modal Surface */}
-      <div className="relative w-full max-w-[820px] bg-[#FFFEFB] border border-[#E3D2BE] rounded-2xl shadow-[0_20px_50px_-12px_rgba(41,37,34,0.18),0_4px_16px_-4px_rgba(41,37,34,0.06)] overflow-hidden flex flex-col my-auto transition-all duration-200 animate-in fade-in zoom-in-95">
+      <div className="relative w-full max-w-[820px] bg-[#FFFEFB] border border-[#E3D2BE] rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[88vh] z-10 transition-all duration-200">
         {/* Header */}
-        <div className="px-6 pt-6 pb-4 border-b border-[#E3D2BE]/60 flex items-start justify-between gap-4 bg-[#FFFEFB]">
+        <div className="px-6 pt-5 pb-4 border-b border-[#E3D2BE]/60 flex items-start justify-between gap-4 bg-[#FFFEFB] shrink-0">
           <div className="space-y-1">
             <div className="flex items-center gap-2.5">
               <span className="material-symbols-outlined text-[24px] text-[#9E2F2B]">folder_managed</span>
@@ -145,7 +197,7 @@ export const DirectoriesModal: React.FC<DirectoriesModalProps> = ({
         </div>
 
         {/* Modal Body */}
-        <div className="p-6 space-y-5 overflow-y-auto max-h-[calc(85vh-160px)] bg-[#FFFEFB]">
+        <div className="p-6 space-y-5 overflow-y-auto flex-1 bg-[#FFFEFB]">
           {/* Statistics Boxes */}
           <div className="grid grid-cols-2 gap-3.5">
             <div className="p-3.5 rounded-xl bg-[#F8F4EC]/90 border border-[#E3D2BE]/70 flex items-center justify-between">
@@ -176,23 +228,23 @@ export const DirectoriesModal: React.FC<DirectoriesModalProps> = ({
                   <span className="material-symbols-outlined text-[#9E2F2B] text-[20px] animate-spin">sync</span>
                   <div>
                     <h4 className="text-[13px] font-semibold text-[#292522]">Overall sync progress</h4>
-                    <p className="text-[12px] text-[#77716B]">{activeJob.stage}: {activeJob.current_file_or_desc || 'Scanning all registered folders...'}</p>
+                    <p className="text-[12px] text-[#77716B]">{activeJob?.stage || 'Syncing'}: {activeJob?.current_file_or_desc || 'Scanning all registered folders...'}</p>
                   </div>
                 </div>
                 <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-[#9E2F2B]/10 text-[#9E2F2B] border border-[#9E2F2B]/20">
-                  {Math.round(activeJob.progress_percent)}%
+                  {Math.round(activeJob?.progress_percent || 0)}%
                 </span>
               </div>
               <div className="w-full bg-[#E5D7C7] h-2 rounded-full overflow-hidden mb-2">
                 <div
                   className="bg-[#9E2F2B] h-full rounded-full transition-all duration-300"
-                  style={{ width: `${Math.max(5, activeJob.progress_percent)}%` }}
+                  style={{ width: `${Math.max(5, activeJob?.progress_percent || 0)}%` }}
                 />
               </div>
               <div className="flex items-center justify-between text-[11px] text-[#77716B]">
                 <span className="flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-[#9E2F2B] animate-ping" />
-                  Processed {activeJob.files_processed} of {activeJob.files_discovered} files ({activeJob.passages_created} passages)
+                  Processed {activeJob?.files_processed ?? 0} of {activeJob?.files_discovered ?? 0} files ({activeJob?.passages_created ?? 0} passages)
                 </span>
               </div>
             </div>
@@ -200,27 +252,42 @@ export const DirectoriesModal: React.FC<DirectoriesModalProps> = ({
 
           {/* Directory Rows */}
           <div className="space-y-2.5">
-            {directories.map((dir) => {
-              const isSyncingThisDir = Boolean(activeJob && activeJob.directory_id === dir.directory_id);
+            {safeDirectories.length === 0 ? (
+              <div className="py-6 px-4 text-center rounded-xl bg-[#F8F4EC]/50 border border-dashed border-[#E3D2BE]">
+                <span className="material-symbols-outlined text-[28px] text-[#77716B]/60 mb-1">folder_off</span>
+                <p className="text-xs font-medium text-[#292522]">No directories indexed yet</p>
+                <p className="text-[11px] text-[#77716B] mt-0.5">Use the buttons below to choose a folder on your computer.</p>
+              </div>
+            ) : (
+              safeDirectories.map((dir) => {
+                const isSyncingThisDir = Boolean(activeJob && activeJob.directory_id === dir.directory_id);
 
-              return (
-                <div
-                  key={dir.directory_id}
-                  className={`p-3.5 rounded-xl bg-[#F8F4EC]/60 border transition-all flex flex-col gap-2.5 ${
-                    isSyncingThisDir
-                      ? 'border-[#9E2F2B]/50 bg-[#F8F4EC]'
-                      : 'border-[#E3D2BE]/60 hover:border-[#9E2F2B]/40'
-                  }`}
-                >
-                  {/* Top directory item row */}
-                  <div className="flex items-center justify-between gap-3 w-full">
-                    <div className="flex items-center gap-3 min-w-0 flex-1">
-                      <div className="w-8 h-8 rounded-lg bg-[#EDE3D4] flex items-center justify-center text-[#9E2F2B] shrink-0">
-                        <span className="material-symbols-outlined text-[18px]">folder</span>
+                return (
+                  <div
+                    key={dir.directory_id}
+                    className={`p-3.5 rounded-xl bg-[#F8F4EC]/60 border transition-all flex flex-col gap-2.5 ${
+                      isSyncingThisDir
+                        ? 'border-[#9E2F2B]/50 bg-[#F8F4EC]'
+                        : 'border-[#E3D2BE]/60 hover:border-[#9E2F2B]/40'
+                    }`}
+                  >
+                    {/* Top directory item row */}
+                    <div className="flex items-center justify-between gap-3 w-full">
+                    <div
+                      onClick={() => handleToggleExpand(dir.directory_id)}
+                      className="flex items-center gap-3 min-w-0 flex-1 cursor-pointer group select-none"
+                      title={expandedDirectoryId === dir.directory_id ? "Click to hide files" : "Click to view files"}
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-[#EDE3D4] group-hover:bg-[#E3D2BE] flex items-center justify-center text-[#9E2F2B] shrink-0 transition-colors">
+                        <span className="material-symbols-outlined text-[18px]">
+                          {expandedDirectoryId === dir.directory_id ? 'folder_open' : 'folder'}
+                        </span>
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
-                          <h4 className="text-sm font-semibold text-[#292522] truncate">{dir.display_name}</h4>
+                          <h4 className="text-sm font-semibold text-[#292522] group-hover:text-[#9E2F2B] transition-colors truncate">
+                            {dir.display_name}
+                          </h4>
                           <span className="text-[11px] font-mono px-1.5 py-0.5 rounded bg-[#EDE3D4] text-[#77716B]">
                             {dir.file_count} files
                           </span>
@@ -230,6 +297,19 @@ export const DirectoriesModal: React.FC<DirectoriesModalProps> = ({
                     </div>
 
                     <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => handleToggleExpand(dir.directory_id)}
+                        title={expandedDirectoryId === dir.directory_id ? "Hide files" : "Show indexed files"}
+                        className="px-2 py-1 rounded-lg text-xs text-[#77716B] hover:text-[#9E2F2B] hover:bg-[#EDE3D4] transition-colors focus-ring inline-flex items-center gap-1"
+                      >
+                        <span className="material-symbols-outlined text-[16px]">
+                          {expandedDirectoryId === dir.directory_id ? 'expand_less' : 'expand_more'}
+                        </span>
+                        <span className="hidden sm:inline font-sans text-[11px]">
+                          {expandedDirectoryId === dir.directory_id ? 'Hide files' : 'View files'}
+                        </span>
+                      </button>
                       <button
                         type="button"
                         onClick={() => onSyncDirectory(dir.directory_id)}
@@ -243,14 +323,137 @@ export const DirectoriesModal: React.FC<DirectoriesModalProps> = ({
                       </button>
                       <button
                         type="button"
-                        onClick={() => setConfirmDeleteId(dir.directory_id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setConfirmDeleteId(confirmDeleteId === dir.directory_id ? null : dir.directory_id);
+                        }}
                         title="Remove from index"
-                        className="p-1.5 rounded-lg text-[#77716B] hover:text-[#ba1a1a] hover:bg-[#ffdad6]/50 transition-colors focus-ring"
+                        className={`p-1.5 rounded-lg transition-colors focus-ring ${
+                          confirmDeleteId === dir.directory_id
+                            ? 'text-white bg-[#BA1A1A]'
+                            : 'text-[#77716B] hover:text-[#ba1a1a] hover:bg-[#ffdad6]/50'
+                        }`}
                       >
                         <span className="material-symbols-outlined text-[18px]">delete</span>
                       </button>
                     </div>
                   </div>
+
+                  {/* Inline Deletion Confirmation Panel */}
+                  {confirmDeleteId === dir.directory_id && (
+                    <div className="p-3 rounded-xl bg-[#FFDAD6]/60 border border-[#BA1A1A]/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-in fade-in duration-200">
+                      <div className="flex items-center gap-2 text-xs text-[#292522]">
+                        <span className="material-symbols-outlined text-[18px] text-[#BA1A1A] shrink-0">warning</span>
+                        <span>
+                          Remove <strong>{dir.display_name}</strong> from search index? <span className="text-[#77716B]">Source files on disk remain untouched.</span>
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setConfirmDeleteId(null);
+                          }}
+                          className="px-2.5 py-1 text-xs text-[#77716B] hover:text-[#292522] rounded-lg hover:bg-black/5 transition-colors"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onRemoveDirectory(dir.directory_id);
+                            setConfirmDeleteId(null);
+                          }}
+                          className="px-3 py-1 text-xs font-semibold text-white bg-[#BA1A1A] hover:bg-[#93000A] active:scale-95 rounded-lg shadow-xs transition-all"
+                        >
+                          Remove from index
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Expanded Files Inspection Accordion */}
+                  {expandedDirectoryId === dir.directory_id && (
+                    <div className="mt-2 pt-2.5 border-t border-[#E3D2BE]/60 w-full animate-in fade-in duration-200">
+                      <div className="flex items-center justify-between pb-2 text-[11px] text-[#77716B] font-medium border-b border-[#E3D2BE]/40">
+                        <span>Tracked files ({directoryDocs[dir.directory_id]?.length ?? dir.file_count})</span>
+                        {loadingDocsId === dir.directory_id && (
+                          <span className="flex items-center gap-1 text-[#9E2F2B]">
+                            <span className="material-symbols-outlined text-[13px] animate-spin">progress_activity</span>
+                            Loading...
+                          </span>
+                        )}
+                      </div>
+
+                      {directoryDocs[dir.directory_id] && directoryDocs[dir.directory_id].length > 0 ? (
+                        <div className="max-h-60 overflow-y-auto divide-y divide-[#E3D2BE]/30 pr-1">
+                          {directoryDocs[dir.directory_id].map((doc) => {
+                            let statusBadge = (
+                              <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-[#85A37A]/20 text-[#2E5E20] border border-[#85A37A]/30">
+                                Indexed ({doc.passage_count} {doc.passage_count === 1 ? 'passage' : 'passages'})
+                              </span>
+                            );
+
+                            if (doc.extraction_status === 'ERROR') {
+                              statusBadge = (
+                                <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-[#ffdad6] text-[#ba1a1a] border border-[#ffb4ab]">
+                                  Failed / Locked
+                                </span>
+                              );
+                            } else if (doc.extraction_status === 'SKIPPED_TOO_LARGE') {
+                              statusBadge = (
+                                <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-[#ffedd5] text-[#9a3412] border border-[#fed7aa]">
+                                  Skipped (&gt;50MB)
+                                </span>
+                              );
+                            } else if (doc.extraction_status === 'NO_TEXT') {
+                              statusBadge = (
+                                <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-[#EDE3D4] text-[#77716B]">
+                                  No text layer
+                                </span>
+                              );
+                            } else if (doc.extraction_status === 'PENDING') {
+                              statusBadge = (
+                                <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-[#fef3c7] text-[#92400e] border border-[#fde68a]">
+                                  Pending sync
+                                </span>
+                              );
+                            }
+
+                            return (
+                              <div key={doc.document_id} className="py-1.5 flex items-center justify-between gap-2 text-xs">
+                                <div className="flex items-center gap-2 min-w-0 flex-1">
+                                  <span className="material-symbols-outlined text-[15px] text-[#77716B] shrink-0">
+                                    {doc.extension?.toLowerCase() === '.pdf' ? 'picture_as_pdf' :
+                                     doc.extension?.toLowerCase() === '.pptx' ? 'slideshow' :
+                                     doc.extension?.toLowerCase() === '.docx' ? 'description' :
+                                     doc.extension?.toLowerCase() === '.py' ? 'code' : 'article'}
+                                  </span>
+                                  <span className="truncate text-[#292522] font-mono text-[11px]" title={doc.canonical_path}>
+                                    {doc.filename}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-2 shrink-0">
+                                  <span className="text-[10px] text-[#77716B] font-mono">
+                                    {(doc.size_bytes ?? 0) > 1048576
+                                      ? `${((doc.size_bytes ?? 0) / 1048576).toFixed(1)} MB`
+                                      : `${Math.round((doc.size_bytes ?? 0) / 1024)} KB`}
+                                  </span>
+                                  {statusBadge}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : !loadingDocsId ? (
+                        <p className="text-xs text-[#77716B] py-2 italic text-center">
+                          No documents discovered yet in this directory.
+                        </p>
+                      ) : null}
+                    </div>
+                  )}
 
                   {/* Individual Folder Sync Load Bar — Appears directly below this specific folder */}
                   {isSyncingThisDir && activeJob && (
@@ -258,28 +461,28 @@ export const DirectoriesModal: React.FC<DirectoriesModalProps> = ({
                       <div className="flex items-center justify-between text-xs mb-1.5">
                         <span className="flex items-center gap-1.5 text-[#77716B]">
                           <span className="material-symbols-outlined text-[15px] text-[#9E2F2B] animate-spin">sync</span>
-                          <span className="font-semibold text-[#292522]">{activeJob.stage}:</span>
+                          <span className="font-semibold text-[#292522]">{activeJob.stage || 'Syncing'}:</span>
                           <span>{activeJob.current_file_or_desc || 'Scanning files...'}</span>
                         </span>
                         <span className="font-mono text-[11px] font-semibold text-[#9E2F2B] bg-[#9E2F2B]/10 px-2 py-0.5 rounded-full border border-[#9E2F2B]/20">
-                          {Math.round(activeJob.progress_percent)}%
+                          {Math.round(activeJob.progress_percent || 0)}%
                         </span>
                       </div>
                       <div className="w-full bg-[#E5D7C7] h-1.5 rounded-full overflow-hidden mb-1.5">
                         <div
                           className="bg-[#9E2F2B] h-full rounded-full transition-all duration-300"
-                          style={{ width: `${Math.max(5, activeJob.progress_percent)}%` }}
+                          style={{ width: `${Math.max(5, activeJob.progress_percent || 0)}%` }}
                         />
                       </div>
                       <div className="flex items-center justify-between text-[11px] text-[#77716B]">
-                        <span>Processed {activeJob.files_processed} of {activeJob.files_discovered} files</span>
-                        <span>{activeJob.passages_created} passages created</span>
+                        <span>Processed {activeJob.files_processed ?? 0} of {activeJob.files_discovered ?? 0} files</span>
+                        <span>{activeJob.passages_created ?? 0} passages created</span>
                       </div>
                     </div>
                   )}
                 </div>
               );
-            })}
+            }))}
           </div>
 
           {/* Add Directory Section */}
@@ -345,37 +548,6 @@ export const DirectoriesModal: React.FC<DirectoriesModalProps> = ({
           </div>
         </div>
       </div>
-
-      {/* Confirmation Modal for Directory Removal */}
-      {confirmDeleteId && (
-        <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs">
-          <div className="w-full max-w-sm bg-white p-5 rounded-2xl border border-[#E3D2BE] shadow-xl space-y-3">
-            <h3 className="text-sm font-bold text-[#292522]">Remove from index?</h3>
-            <p className="text-xs text-[#77716B] leading-relaxed">
-              This will remove FindIT's internal search index for this directory. Your original documents on disk will remain completely untouched.
-            </p>
-            <div className="flex items-center justify-end gap-2 pt-2">
-              <button
-                type="button"
-                onClick={() => setConfirmDeleteId(null)}
-                className="px-3 py-1.5 text-xs text-[#77716B] hover:text-[#292522] rounded-lg"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  onRemoveDirectory(confirmDeleteId);
-                  setConfirmDeleteId(null);
-                }}
-                className="px-3 py-1.5 text-xs font-medium text-white bg-[#ba1a1a] hover:bg-[#93000a] rounded-lg transition-colors"
-              >
-                Confirm Remove
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
