@@ -1,7 +1,6 @@
 """
-FindIT Unit & Integration Tests for Batch 5:
+FindIT Unit & Integration Tests:
 Incremental Sync Scanner, Background Worker & Index Pruning.
-Synchronized with notes/plan.md Phases 12, 13, 14 and notes/EXECUTION_PLAN.md Batch 5.
 """
 
 import os

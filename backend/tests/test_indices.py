@@ -1,6 +1,6 @@
 """
-FindIT Unit Tests for Batch 3: Semantic Embeddings, FAISS Vector Index & BM25 Lexical Engine
-Synchronized with notes/plan.md Phases 6, 7, 8 and notes/EXECUTION_PLAN.md Batch 3.
+FindIT Unit Tests:
+Semantic Embeddings, FAISS Vector Index & BM25 Lexical Engine.
 """
 
 import os

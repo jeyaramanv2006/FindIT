@@ -1,7 +1,6 @@
 """
 FindIT Passage Retrieval & Inspection API Router
 Exposes individual passage details with surrounding context for Passage Inspector modal.
-Synchronized with docs/API.md Section 4 and notes/EXECUTION_PLAN.md Batch 4.
 """
 
 from fastapi import APIRouter, HTTPException, status

@@ -1,6 +1,5 @@
 """
 FindIT Automated End-to-End System Hardening & Edge-Case Test Suite
-Synchronized with notes/plan.md Phase 18 and notes/EXECUTION_PLAN.md Batch 7.
 
 Validates:
 1. Empty directories handling.

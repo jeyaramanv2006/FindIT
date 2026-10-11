@@ -1,7 +1,6 @@
 """
 FindIT Hybrid Search API Router
 Exposes hybrid retrieval combining dense FAISS and sparse BM25 via Reciprocal Rank Fusion.
-Synchronized with docs/API.md Section 4 and notes/EXECUTION_PLAN.md Batch 4.
 """
 
 from typing import Optional

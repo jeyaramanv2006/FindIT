@@ -1,10 +1,9 @@
 """
 FindIT Index Pruning & Directory Removal Service
-Synchronized with docs/DATABASE.md Section 3, docs/TRD.md Section 6, and notes/EXECUTION_PLAN.md Batch 5.
 
 Provides atomic removal of vectors from FAISS, postings from BM25,
 and cascading deletion of records in SQLite, guaranteeing that original
-source files on disk remain 100% untouched.
+source files on disk remain untouched.
 """
 
 import logging

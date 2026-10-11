@@ -1,6 +1,5 @@
 """
 FindIT Background Sync Worker & Job Progress Engine
-Synchronized with docs/TRD.md Section 6, docs/DATABASE.md Section 4, and notes/EXECUTION_PLAN.md Batch 5.
 
 Orchestrates incremental directory synchronization jobs in background threads:
 Scanning -> Pruning -> Text Extraction -> Chunking -> Embedding -> FAISS & BM25 Indexing.

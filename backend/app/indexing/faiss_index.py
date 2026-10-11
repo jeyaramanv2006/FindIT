@@ -2,7 +2,6 @@
 FindIT FAISS Dense Vector Index Layer
 Wraps FAISS IndexFlatIP inside IndexIDMap2 for exact cosine similarity search,
 vector insertion, ID-based deletion, and atomic persistence.
-Synchronized with docs/TRD.md Section 4, docs/DATABASE.md Section 3, and notes/EXECUTION_PLAN.md Batch 3.
 """
 
 import json

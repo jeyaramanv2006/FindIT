@@ -1,6 +1,5 @@
 """
 FindIT Synchronization & Background Job API Endpoints
-Synchronized with docs/API.md Section 2 & 3, docs/TRD.md Section 6, and notes/EXECUTION_PLAN.md Batch 5.
 
 Exposes:
 - POST /api/sync : Trigger incremental synchronization across all registered directories.

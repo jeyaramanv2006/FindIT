@@ -2,7 +2,6 @@
 FindIT Native OS File Manager & System Actions Service
 Safely executes OS-level file revelation (e.g. explorer.exe /select)
 with strict path traversal and directory boundary validation.
-Synchronized with docs/TRD.md, docs/API.md Section 5, and notes/EXECUTION_PLAN.md Batch 4.
 """
 
 import logging

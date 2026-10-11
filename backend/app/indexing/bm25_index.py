@@ -3,7 +3,6 @@ FindIT Lexical Search Index Layer — BM25
 Implements Rank-BM25 with an identifier-aware custom tokenizer that splits
 code identifiers (camelCase, snake_case, paths, dotted names) while preserving
 exact original tokens, and atomic persistence.
-Synchronized with docs/TRD.md Section 5 and notes/EXECUTION_PLAN.md Batch 3.
 """
 
 import logging

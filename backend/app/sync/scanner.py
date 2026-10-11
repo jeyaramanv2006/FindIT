@@ -1,6 +1,5 @@
 """
 FindIT Incremental File Scanner & Change Detection Engine
-Synchronized with docs/TRD.md Section 6, docs/DATABASE.md Section 2, and notes/EXECUTION_PLAN.md Batch 5.
 
 Crawls registered directories, respects boundaries and ignore patterns,
 computes file attributes and SHA-256 fingerprints, and classifies files into:

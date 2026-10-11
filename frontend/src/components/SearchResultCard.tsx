@@ -19,7 +19,7 @@ export function formatLocationLabel(label: string, fileType: string = ''): strin
       return `Page ${pageMatch[1]}`;
     }
     const numMatch = trimmed.match(/\b\d+\b/);
-    return numMatch ? `Page ${numMatch[0]}` : 'Page 4';
+    return numMatch ? `Page ${numMatch[0]}` : trimmed.replace(/^Section:\s*/i, '');
   }
 
   // For pptx / ppt: strictly slide number

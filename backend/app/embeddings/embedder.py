@@ -2,7 +2,6 @@
 FindIT Semantic Embedding Engine
 Wraps sentence-transformers/all-MiniLM-L6-v2 to produce 384-dimensional
 dense vectors with strict L2-normalization.
-Synchronized with docs/TRD.md Section 4 and notes/EXECUTION_PLAN.md Batch 3.
 """
 
 import logging

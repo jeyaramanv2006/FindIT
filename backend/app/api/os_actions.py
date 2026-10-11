@@ -1,7 +1,6 @@
 """
 FindIT Operating System Integration API Router
 Exposes native file explorer launcher and application launch endpoints.
-Synchronized with docs/API.md Section 5 and notes/EXECUTION_PLAN.md Batch 4.
 """
 
 from typing import Optional

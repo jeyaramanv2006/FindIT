@@ -1,7 +1,6 @@
 """
-FindIT Unit & Integration Tests for Batch 4:
+FindIT Unit & Integration Tests:
 Hybrid Search (RRF), Passage Inspector API & Native OS Launcher.
-Synchronized with notes/plan.md Phases 9, 10, 11 and notes/EXECUTION_PLAN.md Batch 4.
 """
 
 import os

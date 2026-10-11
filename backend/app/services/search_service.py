@@ -3,7 +3,6 @@ FindIT Hybrid Search & Reciprocal Rank Fusion (RRF) Service
 Orchestrates dense semantic search (FAISS) and lexical term search (BM25),
 fuses candidate ranks using Reciprocal Rank Fusion (k=60), and enriches
 passages with metadata and precise source locations from SQLite.
-Synchronized with docs/TRD.md Section 5, docs/API.md Section 4, and notes/EXECUTION_PLAN.md Batch 4.
 """
 
 import logging
