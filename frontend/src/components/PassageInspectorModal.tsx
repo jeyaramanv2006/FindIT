@@ -140,10 +140,39 @@ export const PassageInspectorModal: React.FC<PassageInspectorModalProps> = ({
             </div>
           </div>
 
-          {/* Passage Text */}
-          <div className="p-4 rounded-xl bg-sand-50/50 border border-sand-200/80 font-mono text-[13px] leading-relaxed whitespace-pre-wrap select-text text-[#292522]">
-            {renderHighlightedText(passage.text, query)}
+          {/* Preceding context if available */}
+          {passage.surrounding_context_before && (
+            <div className="space-y-1">
+              <span className="text-[11px] font-mono text-warmgrey uppercase tracking-wider font-semibold">
+                Context Before
+              </span>
+              <div className="p-3 rounded-lg bg-sand-100/50 border border-sand-200/50 font-mono text-xs text-warmgrey/90 leading-relaxed whitespace-pre-wrap select-text">
+                {passage.surrounding_context_before}
+              </div>
+            </div>
+          )}
+
+          {/* Matched Passage Text */}
+          <div className="space-y-1">
+            <span className="text-[11px] font-mono text-brick uppercase tracking-wider font-semibold">
+              Matched Passage
+            </span>
+            <div className="p-4 rounded-xl bg-sand-50/80 border border-sand-300 font-mono text-[13px] leading-relaxed whitespace-pre-wrap select-text text-[#292522] shadow-xs">
+              {renderHighlightedText(passage.text, query)}
+            </div>
           </div>
+
+          {/* Succeeding context if available */}
+          {passage.surrounding_context_after && (
+            <div className="space-y-1">
+              <span className="text-[11px] font-mono text-warmgrey uppercase tracking-wider font-semibold">
+                Context After
+              </span>
+              <div className="p-3 rounded-lg bg-sand-100/50 border border-sand-200/50 font-mono text-xs text-warmgrey/90 leading-relaxed whitespace-pre-wrap select-text">
+                {passage.surrounding_context_after}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Modal Footer */}

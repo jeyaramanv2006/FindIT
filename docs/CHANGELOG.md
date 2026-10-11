@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.1.0-m6] - 2026-10-11
+
+### Completed
+- **Milestone 6 & Batch 6 (Phases 15, 16, 17) — Full-Stack Integration: Vite Proxy, Live API & UI Wiring**:
+  - Configured Vite Reverse Proxy in `frontend/vite.config.ts` forwarding `/api` requests directly to FastAPI local backend at `http://127.0.0.1:8000` with `changeOrigin: true`.
+  - Re-architected `frontend/src/services/api.ts` to connect to live backend endpoints with zero mock fallbacks during active connectivity:
+    - `POST /api/search` with Reciprocal Rank Fusion ($k=60$) results.
+    - `GET /api/passages/{id}` retrieving complete unvarnished text, surrounding context, and rank metadata.
+    - `GET /api/directories`, `POST /api/directories`, `DELETE /api/directories/{id}`.
+    - `POST /api/sync`, `POST /api/sync/{directory_id}`, `GET /api/sync/status`, `GET /api/jobs/{id}`.
+    - `POST /api/directories/pick` native OS directory dialog launcher.
+    - `POST /api/open-location` native Windows Explorer reveal bridge.
+  - Enhanced `frontend/src/types/index.ts` with complete `PassageDetail` context fields (`surrounding_context_before`, `surrounding_context_after`, `chunk_ordinal`) and `SyncJob` execution metadata.
+  - Updated `PassageInspectorModal.tsx` to render surrounding document context, keyword highlights, and direct native folder reveal action.
+  - Wired `App.tsx` and `DirectoriesModal.tsx` to live backend:
+    - Active polling interval (500ms) tracking `index_jobs` stages and displaying real-time progress bars (0% to 100%).
+    - Live hybrid search execution with score badges and rank popover.
+    - Clean production build verified via `tsc -b && vite build` (272 kB bundle, zero TypeScript errors).
+
 ## [0.1.0-m7] - 2026-10-11
 
 ### Completed

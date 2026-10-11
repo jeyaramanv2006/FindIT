@@ -24,10 +24,16 @@ export interface PassageDetail {
   location_label: string;
   text: string;
   page_number?: number | null;
+  start_page?: number | null;
+  end_page?: number | null;
   slide_number?: number | null;
   start_line?: number | null;
   end_line?: number | null;
   section_heading?: string | null;
+  paragraph_index?: number | null;
+  chunk_ordinal?: number;
+  surrounding_context_before?: string | null;
+  surrounding_context_after?: string | null;
   hybrid_rank?: number;
   semantic_rank?: number;
   lexical_rank?: number;
@@ -55,6 +61,7 @@ export interface SyncJob {
   files_processed: number;
   passages_created: number;
   current_file_or_desc?: string;
+  error_summary?: string | null;
 }
 
 export interface HealthStatus {

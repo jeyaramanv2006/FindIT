@@ -1,8 +1,8 @@
 # Project Roadmap & Implementation Milestones — FindIT
 
-> **Current Status**: `MILESTONES 1, 2, 3, 4, 5 & 7 (BATCHES 1–5) COMPLETED` | `BATCH 6 (FULL-STACK INTEGRATION) PENDING START`  
+> **Current Status**: `MILESTONES 1, 2, 3, 4, 5, 6 & 7 (BATCHES 1–6) COMPLETED` | `BATCH 7 (SYSTEM HARDENING & VERIFICATION) PENDING START`  
 > **Frontend Design Status**: `COMPLETED IN GOOGLE STITCH & INTEGRATED`  
-> **Backend & Integration Status**: `BATCHES 1–5 RUNTIME & SUITE VERIFIED (56/56 TESTS PASSING)`  
+> **Backend & Integration Status**: `BATCHES 1–6 FULL-STACK INTEGRATION & SUITE VERIFIED (56/56 TESTS PASSING)`  
 
 ---
 
@@ -35,7 +35,7 @@ gantt
 
 ## 2. Implementation Milestones
 
-### Milestone 1 — Project Skeleton & Local Runtime
+### Milestone 1 — Project Skeleton & Local Runtime (`COMPLETED`)
 - **Scope**:
   - Initialize React + TypeScript + Vite frontend project structure.
   - Setup Python + FastAPI backend environment with strict loopback binding (`127.0.0.1`).
@@ -81,13 +81,14 @@ gantt
   - Build Native OS Explorer launcher (`POST /api/open-location`, `POST /api/documents/{id}/open-folder`) with directory confinement protection.
 - **Exit Criteria**: Single query produces a unified hybrid-ranked list of top passages with inspection and folder opening.
 
-### Milestone 6 — Frontend UI & Continuous Search Transition
+### Milestone 6 — Frontend UI & Continuous Search Transition (`COMPLETED`)
 - **Scope**:
   - Implement the established visual design: warm ivory background, terracotta contours, clean typography.
   - Build the smooth 350–500ms in-place transition from Homepage to Results view.
   - Render unified passage result cards with filename, location badge, and path.
-  - Build in-app Passage Inspector modal rendering full extracted text and query highlights.
-  - Implement native OS "Open in folder" bridge.
+  - Build in-app Passage Inspector modal rendering full extracted text, surrounding context, and query highlights.
+  - Implement native OS "Open in folder" bridge and real-time sync progress polling.
+  - Configure Vite reverse proxy targeting `http://127.0.0.1:8000`.
 - **Exit Criteria**: End-to-end search query from UI returns real passages with working inspection and folder opening.
 
 ### Milestone 7 — Sync Engine & Index Lifecycle (`COMPLETED`)
@@ -111,11 +112,11 @@ gantt
 ## 3. Acceptance Verification Checklist
 
 ### UI & Interaction
-- [ ] Homepage matches established visual design (ivory canvas, terracotta contours).
-- [ ] Pressing `Enter` executes smooth in-place header animation (350–500ms) without page reload.
-- [ ] Query remains preserved and editable in the compact header.
-- [ ] Results view presents one unified hybrid list (no separate technical mode tabs).
-- [ ] Respects `prefers-reduced-motion` preferences.
+- [x] Homepage matches established visual design (ivory canvas, terracotta contours).
+- [x] Pressing `Enter` executes smooth in-place header animation (350–500ms) without page reload.
+- [x] Query remains preserved and editable in the compact header.
+- [x] Results view presents one unified hybrid list (no separate technical mode tabs).
+- [x] Respects `prefers-reduced-motion` preferences.
 
 ### Search & Retrieval
 - [x] Local embedding model produces 384D normalized vectors.
