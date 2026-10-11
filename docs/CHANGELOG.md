@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.1.0-m5] - 2026-10-11
+
+### Completed
+- **Milestone 5 & Batch 4 (Phases 9, 10, 11) — Hybrid Search (RRF), Passage Inspector API & Native OS Launcher**:
+  - Implemented `SearchService` in `backend/app/services/search_service.py`:
+    - Dispatches queries to FAISS (top-50 semantic) and BM25 (top-50 lexical).
+    - Fuses results via Reciprocal Rank Fusion ($k=60$): $RRF(d) = \sum_{r \in \mathcal{R}} \frac{1}{60 + \text{rank}_r(d)}$.
+    - Hydrates ranked candidate chunks with SQLite metadata (`documents` and `passages` tables).
+    - Formats trustworthy location coordinate labels (`Page X`, `Slide Y`, `Lines X–Y`, `Section: Z`), passage preview snippets, and shortened display paths (`~/...`).
+    - Implemented passage detail inspection with previous and next surrounding passage chunks in the same document.
+  - Implemented `OSService` in `backend/app/services/os_service.py`:
+    - Safe invocation of Windows Explorer (`explorer.exe /select,"<path>"`) with path traversal prevention and directory confinement against approved roots in SQLite.
+    - Added document launch in default associated application.
+  - Implemented API router endpoints:
+    - `POST /api/search` and `GET /api/search`: hybrid search with pagination (`limit`, `offset`, `next_offset`).
+    - `GET /api/passages/{chunk_id}`: full passage detail for Passage Inspector modal with surrounding context.
+    - `POST /api/open-location`: reveals file in native explorer.
+    - `POST /api/documents/{document_id}/open-folder`: opens document's containing folder.
+    - `POST /api/documents/{document_id}/open`: launches document in default viewer.
+  - Added test suite `backend/tests/test_search.py` with 12 tests covering RRF mathematics, search service, pagination, passage context, OS confinement security, and FastAPI endpoints.
+  - Full backend test suite passing with **51/51 tests passing**.
+
 ## [0.1.0-m4] - 2026-10-11
 
 ### Completed

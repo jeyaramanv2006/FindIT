@@ -1,8 +1,8 @@
 # Project Roadmap & Implementation Milestones — FindIT
 
-> **Current Status**: `MILESTONES 1, 2, 3 & 4 (BATCHES 1–3) COMPLETED` | `MILESTONE 5 / BATCH 4 PENDING START`  
+> **Current Status**: `MILESTONES 1, 2, 3, 4 & 5 (BATCHES 1–4) COMPLETED` | `BATCH 5 (SYNC ENGINE) PENDING START`  
 > **Frontend Design Status**: `COMPLETED IN GOOGLE STITCH & INTEGRATED`  
-> **Backend & Integration Status**: `BATCHES 1–3 RUNTIME & SUITE VERIFIED (39/39 TESTS PASSING)`  
+> **Backend & Integration Status**: `BATCHES 1–4 RUNTIME & SUITE VERIFIED (51/51 TESTS PASSING)`  
 
 ---
 
@@ -71,13 +71,15 @@ gantt
   - Implement BM25 lexical inverted index (`RobustBM25Okapi`) with identifier-aware tokenization.
 - **Exit Criteria**: Given a query, FAISS returns top candidate chunk IDs with cosine similarity scores and BM25 returns exact keyword candidate chunks.
 
-### Milestone 5 — BM25 Lexical Retrieval & Reciprocal Rank Fusion
+### Milestone 5 — BM25 Lexical Retrieval & Reciprocal Rank Fusion (`COMPLETED`)
 - **Scope**:
   - Build BM25 inverted term index over passage texts.
   - Implement BM25 query execution returning top-50 lexical candidate chunks.
   - Implement Reciprocal Rank Fusion ($k=60$) combining FAISS and BM25 candidate ranks.
   - Implement Top-10 pagination and batch retrieval logic.
-- **Exit Criteria**: Single query produces a unified hybrid-ranked list of top passages.
+  - Build Passage Retrieval & Inspection API (`GET /api/passages/{id}`) with surrounding passage context.
+  - Build Native OS Explorer launcher (`POST /api/open-location`, `POST /api/documents/{id}/open-folder`) with directory confinement protection.
+- **Exit Criteria**: Single query produces a unified hybrid-ranked list of top passages with inspection and folder opening.
 
 ### Milestone 6 — Frontend UI & Continuous Search Transition
 - **Scope**:
