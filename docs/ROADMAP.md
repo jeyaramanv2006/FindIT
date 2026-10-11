@@ -1,8 +1,8 @@
 # Project Roadmap & Implementation Milestones — FindIT
 
-> **Current Status**: `MILESTONES 1, 2 & 3 COMPLETED` | `MILESTONE 4 PENDING START`  
+> **Current Status**: `MILESTONES 1, 2, 3 & 4 (BATCHES 1–3) COMPLETED` | `MILESTONE 5 / BATCH 4 PENDING START`  
 > **Frontend Design Status**: `COMPLETED IN GOOGLE STITCH & INTEGRATED`  
-> **Backend & Integration Status**: `MILESTONES 1–3 RUNTIME & SUITE VERIFIED (127.0.0.1:8000)`  
+> **Backend & Integration Status**: `BATCHES 1–3 RUNTIME & SUITE VERIFIED (39/39 TESTS PASSING)`  
 
 ---
 
@@ -62,13 +62,14 @@ gantt
   - Ensure zero text bleeding across PPTX slide boundaries and PDF pages.
 - **Exit Criteria**: Stored passages possess verifiable, trustworthy source location labels.
 
-### Milestone 4 — Semantic Vector Indexing
+### Milestone 4 — Semantic Vector Indexing & BM25 Lexical Engine (`COMPLETED`)
 - **Scope**:
   - Integrate `sentence-transformers/all-MiniLM-L6-v2` embedding model.
-  - Generate 384-dimensional dense vectors and apply L2 normalization.
-  - Construct and persist FAISS `IndexFlatIP` index.
+  - Generate 384-dimensional dense vectors and apply strict L2 normalization.
+  - Construct and persist FAISS `IndexFlatIP` wrapped in `IndexIDMap2`.
   - Maintain `vector_id` $\leftrightarrow$ `chunk_id` mapping.
-- **Exit Criteria**: Given a semantic query vector, FAISS returns the top-50 candidate chunk IDs with cosine similarity scores.
+  - Implement BM25 lexical inverted index (`RobustBM25Okapi`) with identifier-aware tokenization.
+- **Exit Criteria**: Given a query, FAISS returns top candidate chunk IDs with cosine similarity scores and BM25 returns exact keyword candidate chunks.
 
 ### Milestone 5 — BM25 Lexical Retrieval & Reciprocal Rank Fusion
 - **Scope**:

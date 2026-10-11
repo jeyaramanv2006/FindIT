@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.1.0-m4] - 2026-10-11
+
+### Completed
+- **Milestone 4 & Batch 3 (Phases 6, 7, 8) — Semantic Embeddings, FAISS Vector Index & BM25 Lexical Engine**:
+  - Implemented `EmbeddingEngine` and `get_embedder()` in `backend/app/embeddings/embedder.py`:
+    - Wraps `sentence-transformers/all-MiniLM-L6-v2` with lazy loading on demand and CPU thread safety.
+    - Produces exactly 384-dimensional dense vectors with strict L2-normalization ($\|\mathbf{v}\|_2 = 1.0$).
+    - Supports batch document embedding (`embed_texts`) and single query vector inference (`embed_query`).
+  - Implemented `FaissIndex` and `VectorSearchResult` in `backend/app/indexing/faiss_index.py`:
+    - Wraps `faiss.IndexFlatIP(384)` inside `faiss.IndexIDMap2` for exact cosine similarity search and explicit 64-bit vector ID mapping.
+    - Implemented vector insertion (`add_vectors`), ID-based removal (`remove_vectors`), and chunk removal (`remove_chunks`).
+    - Implemented atomic serialization to disk (`backend/data/index.faiss`) and bidirectional `vector_id` $\leftrightarrow$ `chunk_id` metadata mapping (`index.faiss.map.json`).
+  - Implemented `BM25Index`, `RobustBM25Okapi`, and `tokenize_code_and_prose` in `backend/app/indexing/bm25_index.py`:
+    - Custom identifier-aware tokenizer extracting natural prose while preserving compound programming symbols (`snake_case`, `camelCase`, `PascalCase`, dotted module names, and file paths) alongside their individual sub-components.
+    - Implemented `RobustBM25Okapi` with positive-smoothed Lucene IDF ($\ln(1 + \frac{N - n + 0.5}{n + 0.5})$) guaranteeing non-zero scores on small corpora.
+    - Implemented dynamic document addition, deletion, and atomic pickle serialization (`backend/data/bm25.pkl`).
+  - Created comprehensive unit test suite in `backend/tests/test_indices.py` covering:
+    - 384D vector dimensions and unit norms.
+    - FAISS exact inner-product search and 100 sample vector verification checkpoint with cosine similarities $\in [-1.0, 1.0]$.
+    - BM25 verification checkpoint ranking exact `auth_middleware` matches over prose.
+    - Rare identifier retrieval and atomic index save/reload fidelity.
+  - Full backend test suite passing with **39/39 tests passing**.
+
 ## [0.1.0-m3] - 2026-10-11
 
 ### Completed
