@@ -10,6 +10,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.0] - 2026-10-11
 
 ### Completed
+- **Performance & Hardware Acceleration — Adaptive GPU Inference with Graceful CPU Fallback (ADR-010)**:
+  - Upgraded `EmbeddingEngine` in `backend/app/embeddings/embedder.py` to support dynamic execution device binding.
+  - Implemented automatic hardware detection in `backend/app/core/config.py`: auto-selects `"cuda"` if an NVIDIA GPU is available (`torch.cuda.is_available()`), with transparent fallback to `"cpu"`.
+  - Added `FINDIT_EMBEDDING_DEVICE` environment override for explicit hardware configuration.
+  - Formally recorded decision in `docs/DECISIONS.md` under ADR-010.
+  - Verified full test suite passes with 64/64 tests green.
 - **Milestone 8 & Batch 7 (Phase 18) — System Hardening, Edge-Case Resilience & Verification Runbook**:
   - Implemented comprehensive automated end-to-end test suite in `backend/tests/test_e2e.py` covering:
     - Empty directory indexing: clean job completion with 0 files and 0 passages.

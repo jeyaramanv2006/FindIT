@@ -65,6 +65,7 @@ Text extraction must capture structural location coordinates during file parsing
 - **Model**: `sentence-transformers/all-MiniLM-L6-v2`.
 - **Vector Dimension**: Exactly **384 dimensions**.
 - **Normalization**: All passage vectors and query vectors must be L2-normalized ($||\mathbf{v}||_2 = 1.0$) prior to insertion or query.
+- **Hardware Acceleration**: Automatic device binding (`cuda` if NVIDIA GPU is detected via `torch.cuda.is_available()`, with graceful fallback to `cpu`). Overrideable via `FINDIT_EMBEDDING_DEVICE`.
 - **Model Versioning**: Document metadata must record `embedding_model_version`. If the model is upgraded, all vectors must be recomputed; vectors from disparate models must never coexist in the same index.
 
 ### 4.2 FAISS Index Baseline

@@ -244,10 +244,19 @@ class FaissIndex:
                 json.dump(mapping_data, f, indent=2)
 
             # 3. Atomic replacement
-            if tmp_index_path.exists():
-                os.replace(str(tmp_index_path), str(target))
-            if tmp_map_path.exists():
-                os.replace(str(tmp_map_path), str(final_map_path))
+            import time
+            for attempt in range(5):
+                try:
+                    if tmp_index_path.exists():
+                        os.replace(str(tmp_index_path), str(target))
+                    if tmp_map_path.exists():
+                        os.replace(str(tmp_map_path), str(final_map_path))
+                    break
+                except OSError as e:
+                    if attempt == 4:
+                        logger.warning(f"Failed to persist FAISS index after 5 retries: {e}")
+                    else:
+                        time.sleep(0.05 * (attempt + 1))
 
         logger.info(f"FAISS index and mapping saved atomically to {target} ({self.total_vectors} vectors).")
 

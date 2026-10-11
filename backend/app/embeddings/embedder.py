@@ -20,17 +20,19 @@ class EmbeddingEngine:
     """
     Manages local dense embedding generation using SentenceTransformer.
     Ensures all vectors are 384-dimensional float32 arrays with unit L2 norm.
+    Supports CUDA hardware acceleration with graceful CPU fallback.
     """
 
     def __init__(
         self,
         model_name: str = DEFAULT_MODEL_NAME,
-        device: str = "cpu",
+        device: Optional[str] = None,
         dimension: int = DEFAULT_DIMENSION,
         lazy_load: bool = True,
     ):
+        from app.core import config
         self.model_name = model_name
-        self.device = device
+        self.device = device or config.EMBEDDING_DEVICE
         self.dimension = dimension
         self._model = None
         self._lock = threading.Lock()

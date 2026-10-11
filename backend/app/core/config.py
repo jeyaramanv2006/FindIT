@@ -15,6 +15,22 @@ BM25_INDEX_PATH = DATA_DIR / "bm25.pkl"
 HOST = os.getenv("FINDIT_HOST", "127.0.0.1")
 PORT = int(os.getenv("FINDIT_PORT", "8000"))
 
+# Hardware acceleration & Embedding device selection
+# Defaults to "cuda" if CUDA GPU is available, else "cpu"
+def get_default_device() -> str:
+    env_device = os.getenv("FINDIT_EMBEDDING_DEVICE")
+    if env_device:
+        return env_device
+    try:
+        import torch
+        if torch.cuda.is_available():
+            return "cuda"
+    except Exception:
+        pass
+    return "cpu"
+
+EMBEDDING_DEVICE = get_default_device()
+
 # CORS settings (allowed local frontend dev servers)
 ALLOWED_ORIGINS = [
     "http://localhost:5173",

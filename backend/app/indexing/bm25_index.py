@@ -259,7 +259,17 @@ class BM25Index:
                 pickle.dump(data, f, protocol=pickle.HIGHEST_PROTOCOL)
 
             if tmp_path.exists():
-                os.replace(str(tmp_path), str(target))
+                # On Windows, retry briefly if another reader holds a transient lock
+                import time
+                for attempt in range(5):
+                    try:
+                        os.replace(str(tmp_path), str(target))
+                        break
+                    except OSError as e:
+                        if attempt == 4:
+                            logger.warning(f"Failed to persist BM25 index after 5 retries: {e}")
+                        else:
+                            time.sleep(0.05 * (attempt + 1))
 
         logger.info(f"BM25 index saved atomically to {target} ({self.total_documents} documents).")
 

@@ -21,6 +21,7 @@ This document records all fundamental architectural, technological, and algorith
 - [ADR-007: Index-Only Directory Removal Guaranteeing Source File Immutability](#adr-007-index-only-directory-removal-guaranteeing-source-file-immutability)
 - [ADR-008: Real Backend Job Telemetry over Synthetic Animated Progress Bars](#adr-008-real-backend-job-telemetry-over-synthetic-animated-progress-bars)
 - [ADR-009: Strict Loopback Binding (`127.0.0.1`) and Approved-Root Boundary Confinement](#adr-009-strict-loopback-binding-127001-and-approved-root-boundary-confinement)
+- [ADR-010: Adaptive GPU Hardware Acceleration (CUDA) with CPU Fallback](#adr-010-adaptive-gpu-hardware-acceleration-cuda-with-cpu-fallback)
 
 ---
 
@@ -173,3 +174,20 @@ This document records all fundamental architectural, technological, and algorith
 - **Consequences**:  
   - **Positive**: Robust local security sandbox preventing unauthorized file exposure.  
   - **Negative**: Remote multi-device access is blocked (by design for v1.0).
+
+---
+
+### ADR-010: Adaptive GPU Hardware Acceleration (CUDA) with CPU Fallback
+
+- **Date**: 2026-10-11
+- **Status**: `Accepted`
+- **Context**:  
+  Locally running sentence-transformers embedding generation on pure CPU threads (e.g. `device="cpu"`) constrains indexing throughput to ~40–80 passages/second. Modern personal machines often possess discrete GPUs (e.g. NVIDIA RTX series with Tensor Cores) capable of accelerating vector inference by 10x–15x.
+- **Decision**:  
+  Enable automatic hardware acceleration in `EmbeddingEngine` and `app.core.config.EMBEDDING_DEVICE`. Automatically query `torch.cuda.is_available()`; bind to `"cuda"` when a capable GPU is detected and seamlessly fall back to `"cpu"` when unavailable, with an optional `FINDIT_EMBEDDING_DEVICE` environment override.
+- **Alternatives Considered**:  
+  - *Strict CPU-only*: Ensures identical environment behavior everywhere but leaves high-performance local GPUs unutilized.
+  - *Hardcoding `"cuda"`*: Fails on systems without discrete NVIDIA GPUs.
+- **Consequences**:  
+  - **Positive**: Instant 10x–15x acceleration on systems with NVIDIA GPUs; eliminates CPU thermal throttling during batch document indexing.
+  - **Negative**: CUDA-enabled PyTorch builds require larger installation footprint (~2GB vs ~200MB).
