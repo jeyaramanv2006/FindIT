@@ -55,16 +55,20 @@ FindIT bridges human memory with your local storage. You select the local folder
 
 ## Visual Demo
 
-### Hybrid Search & Passage Inspection
+### Hybrid Search & Passage Results
 ![FindIT Search Results](docs/assets/findit-results.png)
+*The results view features a persistent morphing header, active ranking strategy toggles (`Hybrid`, `Semantic`, `Lexical`), passage cards with precise location badges, matched keyword highlights, and direct "Open in folder" native explorer actions.*
 
-<details>
-<summary><b>Click to view additional interface previews (Homepage Canvas & Directory Manager)</b></summary>
+<br>
+
+<details open>
+<summary><b>Additional Interface Views (Homepage & Directory Manager)</b></summary>
 <br>
 
 | Minimalist Search Canvas | Indexed Directories Manager |
 | :---: | :---: |
 | ![FindIT Homepage](docs/assets/findit-home.png) | ![FindIT Directories Modal](docs/assets/findit-directories.png) |
+| *Hero view with live backend connectivity badge and terracotta contour canvas.* | *Folder manager supporting native directory selection and real-time sync progress.* |
 
 </details>
 
@@ -75,7 +79,8 @@ FindIT bridges human memory with your local storage. You select the local folder
 - **Hybrid Semantic + Lexical Retrieval**:
   - **Dense Vector Search**: Powered by `sentence-transformers/all-MiniLM-L6-v2` and `FAISS` (`IndexFlatIP`) for concept-based and associative recall.
   - **Lexical Keyword Search**: Powered by `BM25` for exact token matches, snake_case symbols, variable names, and configuration keys.
-  - **Reciprocal Rank Fusion (RRF, $k=60$)**: Merges semantic and lexical result sets into a single unified ranked list.
+  - **Reciprocal Rank Fusion (RRF, $k=60$)**: Dynamically fuses semantic and lexical candidate pools into a single unified ranked list.
+  - **Live Ranking Strategy Toggles**: Filter and re-sort search results on the fly between **Hybrid (RRF)**, **Pure Semantic**, or **Pure Lexical** modes.
 - **Granular Passage-Level Provenance**:
   - Highlights the exact portion of the document where your concept lives.
   - Formats physical location coordinates:
@@ -84,15 +89,15 @@ FindIT bridges human memory with your local storage. You select the local folder
     - **Markdown / Plain Text / Code**: `Lines X–Y` (e.g., `Lines 112–138`)
     - **Word Documents (DOCX)**: `Section: <Heading>`
 - **Native OS File Explorer Integration**:
-  - Dedicated **"Open in folder"** action opens your operating system's native file manager (`explorer.exe` on Windows, `open -R` on macOS, `xdg-open` on Linux) and selects the relevant file.
-  - Optional **"Open file"** action launches the file directly in your system's default application.
+  - Dedicated **"Open in folder"** action commands the native operating system file manager (`explorer.exe` on Windows, `open -R` on macOS, `xdg-open` on Linux) to reveal and highlight the exact file.
+  - Optional **"Open file"** action launches the document in the user's default system reader.
 - **In-App Passage Inspector**:
-  - Inspect the full, unvarnished extracted text inside a modal with search query highlighting before opening the source application.
+  - Inspect the full, unvarnished extracted text inside a modal with search query highlighting and surrounding chunk context before opening the host application.
+- **Indexed Directory Manager & Native Picker**:
+  - Register folders via manual path entry or using the native OS directory selection dialog.
+  - Monitor real-time background sync progress across pipeline stages: `SCANNING` &rarr; `EXTRACTING` &rarr; `EMBEDDING` &rarr; `INDEXING` &rarr; `IDLE`.
 - **Multi-Format Document Parsing**:
   - Built-in extractors for **PDF** (`PyMuPDF`), **DOCX** (`python-docx`), **PPTX** (`python-pptx`), **Markdown** (`.md`), **Plain Text** (`.txt`), **Source Code** (`.py`, `.ts`, `.js`, `.tsx`, `.jsx`, `.html`, `.css`), and **Config Files** (`.json`, `.yaml`, `.yml`, `.toml`).
-- **Real-Time Job Telemetry & Background Sync**:
-  - Incremental document scanning: unchanged files (verified by modification timestamps) are skipped automatically.
-  - Live pipeline progress stages: `SCANNING` &rarr; `EXTRACTING` &rarr; `EMBEDDING` &rarr; `INDEXING` &rarr; `COMPLETED`.
 - **Zero Cloud Leakage & Non-Destructive**:
   - All inference runs locally on CPU or NVIDIA GPU via CUDA.
   - Directory registrations and removals affect **only** FindIT's internal SQLite and vector indices—original documents on disk are never altered or deleted.
@@ -158,9 +163,7 @@ FindIT includes automated batch runners that detect missing environments, instal
    ```cmd
    run.bat
    ```
-   *On first run, `run.bat` automatically invokes `scripts\setup.bat`, sets up the Python virtual environment, installs backend packages (auto-detecting CUDA), runs `npm install` for the frontend, and launches both services in separate terminal windows.*
-
-3. Open your browser at **`http://localhost:5173`**.
+   *On first run, `run.bat` automatically invokes `scripts\setup.bat`, sets up the Python virtual environment, installs backend packages (auto-detecting CUDA), runs `npm install` for the frontend, launches both services, and automatically opens `http://localhost:5173` in your default browser.*
 
 ---
 

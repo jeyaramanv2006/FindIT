@@ -5,7 +5,7 @@ import { SearchResultCard } from './components/SearchResultCard';
 import { PassageInspectorModal } from './components/PassageInspectorModal';
 import { DirectoriesModal } from './components/DirectoriesModal';
 import { ErrorBoundary } from './components/ErrorBoundary';
-import type { SearchResult, PassageDetail, IndexedDirectory, SyncJob, HealthStatus } from './types';
+import type { SearchResult, PassageDetail, IndexedDirectory, SyncJob } from './types';
 import {
   searchPassages,
   getPassageDetail,
@@ -17,7 +17,6 @@ import {
   getJobStatus,
   getSyncStatus,
   openContainingFolder,
-  checkBackendHealth,
 } from './services/api';
 
 export function App() {
@@ -37,7 +36,6 @@ export function App() {
 
   // Directories & Sync state
   const [directories, setDirectories] = useState<IndexedDirectory[]>([]);
-  const [backendHealth, setBackendHealth] = useState<HealthStatus | null>(null);
   const [activeJob, setActiveJob] = useState<SyncJob | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
@@ -65,11 +63,8 @@ export function App() {
     return [...results].sort((a, b) => (a.hybrid_rank ?? 99999) - (b.hybrid_rank ?? 99999));
   }, [results, sortBy]);
 
-  // Load directories and backend health on mount
+  // Load directories on mount
   useEffect(() => {
-    checkBackendHealth().then((status) => {
-      setBackendHealth(status);
-    });
     getIndexedDirectories().then((dirs) => setDirectories(dirs));
   }, []);
 
@@ -186,12 +181,8 @@ export function App() {
             clearInterval(pollTimer);
             setActiveJob(null);
             showToast(`Sync completed for ${target.display_name} (${job.files_processed} files, ${job.passages_created} passages).`);
-            const [updatedDirs, health] = await Promise.all([
-              getIndexedDirectories(),
-              checkBackendHealth(),
-            ]);
+            const updatedDirs = await getIndexedDirectories();
             setDirectories(updatedDirs);
-            setBackendHealth(health);
           } else if (job.status === 'FAILED') {
             clearInterval(pollTimer);
             setActiveJob(null);
@@ -245,12 +236,8 @@ export function App() {
             clearInterval(pollTimer);
             setActiveJob(null);
             showToast(`All ${directories.length} directories successfully synchronized.`);
-            const [updatedDirs, health] = await Promise.all([
-              getIndexedDirectories(),
-              checkBackendHealth(),
-            ]);
+            const updatedDirs = await getIndexedDirectories();
             setDirectories(updatedDirs);
-            setBackendHealth(health);
           } else {
             // Display currently running job in progress bar
             setActiveJob(running[0]);
@@ -273,9 +260,6 @@ export function App() {
       const updatedDirs = await getIndexedDirectories();
       setDirectories(updatedDirs);
 
-      const health = await checkBackendHealth();
-      setBackendHealth(health);
-
       // Trigger automatic sync for the newly added folder
       handleSyncDirectory(res.directory.directory_id);
     } catch (err: unknown) {
@@ -289,8 +273,6 @@ export function App() {
       const res = await deleteDirectory(dirId);
       setDirectories((prev) => prev.filter((d) => d.directory_id !== dirId));
       showToast(res.message || 'Directory removed. Original files are untouched.');
-      const health = await checkBackendHealth();
-      setBackendHealth(health);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Failed to delete directory';
       showToast(`Error: ${msg}`);

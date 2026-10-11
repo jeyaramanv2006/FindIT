@@ -41,5 +41,8 @@ echo   FindIT is running!
 echo   - Backend:  http://127.0.0.1:8000
 echo   - Frontend: http://localhost:5173
 echo =====================================================================
-timeout /t 3 >nul
+echo.
+echo Launching FindIT in your browser...
+timeout /t 3 /nobreak >nul
+start http://localhost:5173
 exit
