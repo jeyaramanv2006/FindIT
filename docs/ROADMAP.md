@@ -1,8 +1,8 @@
 # Project Roadmap & Implementation Milestones — FindIT
 
-> **Current Status**: `MILESTONES 1, 2, 3, 4 & 5 (BATCHES 1–4) COMPLETED` | `BATCH 5 (SYNC ENGINE) PENDING START`  
+> **Current Status**: `MILESTONES 1, 2, 3, 4, 5 & 7 (BATCHES 1–5) COMPLETED` | `BATCH 6 (FULL-STACK INTEGRATION) PENDING START`  
 > **Frontend Design Status**: `COMPLETED IN GOOGLE STITCH & INTEGRATED`  
-> **Backend & Integration Status**: `BATCHES 1–4 RUNTIME & SUITE VERIFIED (51/51 TESTS PASSING)`  
+> **Backend & Integration Status**: `BATCHES 1–5 RUNTIME & SUITE VERIFIED (56/56 TESTS PASSING)`  
 
 ---
 
@@ -90,7 +90,7 @@ gantt
   - Implement native OS "Open in folder" bridge.
 - **Exit Criteria**: End-to-end search query from UI returns real passages with working inspection and folder opening.
 
-### Milestone 7 — Sync Engine & Index Lifecycle
+### Milestone 7 — Sync Engine & Index Lifecycle (`COMPLETED`)
 - **Scope**:
   - Implement incremental sync detecting added, modified, and deleted files via size and timestamps.
   - Build atomic index update and prune pipeline.
@@ -118,20 +118,20 @@ gantt
 - [ ] Respects `prefers-reduced-motion` preferences.
 
 ### Search & Retrieval
-- [ ] Local embedding model produces 384D normalized vectors.
-- [ ] FAISS (`IndexFlatIP`) and BM25 candidate pools are fused via RRF ($k=60$).
-- [ ] Initial search displays top-10 passages with functional "Show more" batching.
-- [ ] Multiple passages from the same document can appear independently.
-- [ ] Clicking a result card opens the in-app Passage Inspector with faithful text.
-- [ ] Source location coordinates (Page X of Y, Slide N, Lines X–Y) are accurate.
-- [ ] "Open in folder" opens the native file explorer without opening the passage modal.
+- [x] Local embedding model produces 384D normalized vectors.
+- [x] FAISS (`IndexFlatIP`) and BM25 candidate pools are fused via RRF ($k=60$).
+- [x] Initial search displays top-10 passages with functional "Show more" batching.
+- [x] Multiple passages from the same document can appear independently.
+- [x] Clicking a result card opens the in-app Passage Inspector with faithful text.
+- [x] Source location coordinates (Page X of Y, Slide N, Lines X–Y) are accurate.
+- [x] "Open in folder" opens the native file explorer without opening the passage modal.
 
 ### Indexing & Reliability
-- [ ] Indexing progress indicates real stages and real file counts.
-- [ ] Removing a directory removes internal index records only; original files are untouched.
-- [ ] Incremental sync updates modified files and purges deleted documents.
-- [ ] Local API binds strictly to `127.0.0.1` and blocks traversal outside approved roots.
-- [ ] No document content or queries are transmitted to external cloud services.
+- [x] Indexing progress indicates real stages and real file counts.
+- [x] Removing a directory removes internal index records only; original files are untouched.
+- [x] Incremental sync updates modified files and purges deleted documents.
+- [x] Local API binds strictly to `127.0.0.1` and blocks traversal outside approved roots.
+- [x] No document content or queries are transmitted to external cloud services.
 
 ---
 

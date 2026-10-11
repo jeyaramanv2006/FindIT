@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core import config
 from app.db.database import init_db
-from app.api import health, directories, search, passages, os_actions
+from app.api import health, directories, search, passages, os_actions, sync
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -34,6 +34,7 @@ def create_app() -> FastAPI:
     app.include_router(search.router, prefix="/api")
     app.include_router(passages.router, prefix="/api")
     app.include_router(os_actions.router, prefix="/api")
+    app.include_router(sync.router, prefix="/api")
 
     return app
 

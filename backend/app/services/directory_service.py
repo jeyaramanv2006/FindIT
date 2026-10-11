@@ -285,8 +285,8 @@ class DirectoryService:
     def delete_directory(directory_id: str) -> bool:
         """
         Unlinks a directory from FindIT: deletes database records
-        (cascading to documents and passages) while source files on disk
-        remain 100% untouched.
+        (cascading to documents and passages) and prunes search indices (FAISS & BM25)
+        while source files on disk remain 100% untouched.
         """
         with get_db() as conn:
             cursor = conn.cursor()
@@ -294,15 +294,16 @@ class DirectoryService:
             if not cursor.fetchone():
                 raise DirectoryNotFoundError(f"Directory ID '{directory_id}' not found.")
 
-            cursor.execute("DELETE FROM directories WHERE directory_id = ?;", (directory_id,))
+        from app.services.pruning_service import PruningService
+        PruningService.prune_directory(directory_id)
         return True
 
     @classmethod
     def sync_directory(cls, directory_id: str) -> dict:
         """
         Triggers an incremental scan/sync of a single registered directory.
+        Executes full scanning, pruning, extraction, chunking, and dual indexing.
         """
-        now_iso = datetime.now(timezone.utc).isoformat()
         with get_db() as conn:
             cursor = conn.cursor()
             cursor.execute("SELECT canonical_path, display_name FROM directories WHERE directory_id = ?;", (directory_id,))
@@ -318,35 +319,16 @@ class DirectoryService:
                 )
                 raise ValueError(f"Registered directory missing on disk: '{target_path}'")
 
-            cursor.execute("UPDATE directories SET sync_status = 'SYNCING' WHERE directory_id = ?;", (directory_id,))
-            file_count = cls.scan_files(target_path, directory_id, conn)
-
-            cursor.execute(
-                """
-                UPDATE directories
-                SET last_sync_completed_at = ?, sync_status = 'IDLE', last_error = NULL
-                WHERE directory_id = ?
-                """,
-                (now_iso, directory_id),
-            )
-
-            job_id = "job_" + uuid.uuid4().hex[:8]
-            cursor.execute(
-                """
-                INSERT INTO index_jobs (
-                    job_id, directory_id, job_type, status, stage,
-                    files_discovered, files_processed, files_failed,
-                    passages_created, started_at, updated_at, completed_at
-                ) VALUES (?, ?, 'SYNC_DIRECTORY', 'COMPLETED', 'SCANNING', ?, ?, 0, 0, ?, ?, ?)
-                """,
-                (job_id, directory_id, file_count, file_count, now_iso, now_iso, now_iso),
-            )
+        from app.sync.worker import get_sync_worker
+        worker = get_sync_worker()
+        job_id = worker.start_sync(directory_id, background=False)
+        job_info = worker.get_job_status(job_id)
 
         return {
             "job_id": job_id,
             "directory_id": directory_id,
             "status": "COMPLETED",
-            "files_discovered": file_count,
+            "files_discovered": job_info["files_discovered"] if job_info else 0,
         }
 
     @staticmethod

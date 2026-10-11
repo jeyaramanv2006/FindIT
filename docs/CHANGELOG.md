@@ -7,6 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.1.0-m7] - 2026-10-11
+
+### Completed
+- **Milestone 7 & Batch 5 (Phases 12, 13, 14) — Incremental Sync Scanner, Background Worker & Index Pruning**:
+  - Implemented `ScannerService` and `ScanResult` in `backend/app/sync/scanner.py`:
+    - Recursive crawling of user-approved directory roots.
+    - Directory boundary confinement with symlink containment defense.
+    - Automated skipping of ignored directories (`.git`, `node_modules`, `.venv`, etc.) and unsupported extensions.
+    - Timestamp (`mtime`), file size (`size_bytes`), and buffered SHA-256 fingerprint change detection.
+    - Precise categorization into `new_files`, `modified_files`, `deleted_files`, and `unchanged_files`.
+  - Implemented `PruningService` in `backend/app/services/pruning_service.py`:
+    - Atomic index pruning: removes obsolete vectors from FAISS and postings from BM25.
+    - Cascade deletion of directory and document metadata in SQLite (`foreign_keys = ON`).
+    - Source document immutability guarantee: original files on disk remain 100% untouched.
+    - Added disaster-recovery utility `rebuild_bm25_from_sqlite()` as mandated by TRD Section 6.2.
+  - Implemented `SyncWorker` in `backend/app/sync/worker.py`:
+    - Multi-threaded asynchronous execution pool with per-directory locking.
+    - Complete multi-stage indexing pipeline: `VALIDATING` -> `SCANNING` -> `EXTRACTING` -> `EMBEDDING` -> `INDEXING` -> `COMPLETED`.
+    - Real-time progress metric calculations recorded in `index_jobs` table.
+    - Seamless extractor and chunker dispatch with sequential 64-bit vector ID mapping.
+  - Implemented Synchronization REST API in `backend/app/api/sync.py`:
+    - `POST /api/sync`: triggers global incremental synchronization across all registered folders.
+    - `POST /api/sync/{directory_id}`: triggers sync for a single directory (returns 202 Accepted).
+    - `GET /api/sync/status`: queries live status, stage, and file counts across running/recent jobs.
+    - `GET /api/jobs/{job_id}`: retrieves detailed job execution metrics as per API.md Section 3.1.
+  - Connected `DirectoryService.delete_directory` to `PruningService.prune_directory` and `DirectoryService.sync_directory` to `SyncWorker`.
+  - Registered `sync.router` in `backend/app/main.py`.
+  - Added comprehensive test suite `backend/tests/test_sync.py` (5 tests covering change detection, directory pruning, disk file immutability, full pipeline execution, and REST endpoints).
+  - Full backend test suite passing with **56/56 tests passing**.
+
 ## [0.1.0-m5] - 2026-10-11
 
 ### Completed

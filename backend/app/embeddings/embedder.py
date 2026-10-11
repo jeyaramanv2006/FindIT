@@ -108,6 +108,10 @@ class EmbeddingEngine:
 
         return self.l2_normalize(embeddings)
 
+    def embed_passages(self, texts: List[str], batch_size: int = 32) -> np.ndarray:
+        """Alias for embed_texts."""
+        return self.embed_texts(texts, batch_size=batch_size)
+
     def embed_query(self, query: str) -> np.ndarray:
         """
         Generates a 384D L2-normalized dense embedding for a single search query string.
