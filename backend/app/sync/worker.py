@@ -445,6 +445,42 @@ class SyncWorker:
                 doc_id = "doc_" + uuid.uuid4().hex[:12]
                 now_doc_iso = datetime.now(timezone.utc).isoformat()
 
+                # Skip files exceeding MAX_FILE_SIZE_BYTES
+                if scanned_file.size_bytes > config.MAX_FILE_SIZE_BYTES:
+                    logger.warning(
+                        f"Skipping oversized file '{file_path}' ({scanned_file.size_bytes} bytes exceeds {config.MAX_FILE_SIZE_BYTES} limit)"
+                    )
+                    with get_db(self.db_path) as conn:
+                        cursor = conn.cursor()
+                        cursor.execute(
+                            """
+                            INSERT INTO documents (
+                                document_id, directory_id, canonical_path, filename,
+                                extension, file_type, size_bytes, modified_time,
+                                content_fingerprint, extraction_status, last_indexed_at
+                            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'SKIPPED_TOO_LARGE', ?)
+                            ON CONFLICT(canonical_path) DO UPDATE SET
+                                extraction_status = 'SKIPPED_TOO_LARGE',
+                                last_indexed_at = excluded.last_indexed_at;
+                            """,
+                            (
+                                doc_id, directory_id, scanned_file.canonical_path,
+                                scanned_file.filename, scanned_file.extension,
+                                scanned_file.file_type, scanned_file.size_bytes,
+                                scanned_file.modified_time, scanned_file.content_fingerprint,
+                                now_doc_iso,
+                            ),
+                        )
+                    files_failed += 1
+                    files_processed += 1
+                    self._update_job_progress(
+                        job_id,
+                        stage="EXTRACTING",
+                        files_processed=files_processed,
+                        files_failed=files_failed,
+                    )
+                    continue
+
                 if not extractor:
                     # Unsupported format
                     with get_db(self.db_path) as conn:
@@ -484,6 +520,42 @@ class SyncWorker:
                     extracted_doc = extractor.extract(file_path)
                 except Exception as e:
                     logger.warning(f"Failed extraction on '{file_path}': {e}")
+                    with get_db(self.db_path) as conn:
+                        cursor = conn.cursor()
+                        cursor.execute(
+                            """
+                            INSERT INTO documents (
+                                document_id, directory_id, canonical_path, filename,
+                                extension, file_type, size_bytes, modified_time,
+                                content_fingerprint, extraction_status, last_indexed_at
+                            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'ERROR', ?)
+                            ON CONFLICT(canonical_path) DO UPDATE SET
+                                extraction_status = 'ERROR',
+                                last_indexed_at = excluded.last_indexed_at;
+                            """,
+                            (
+                                doc_id, directory_id, scanned_file.canonical_path,
+                                scanned_file.filename, scanned_file.extension,
+                                scanned_file.file_type, scanned_file.size_bytes,
+                                scanned_file.modified_time, scanned_file.content_fingerprint,
+                                now_doc_iso,
+                            ),
+                        )
+                    files_failed += 1
+                    files_processed += 1
+                    self._update_job_progress(
+                        job_id,
+                        stage="EXTRACTING",
+                        files_processed=files_processed,
+                        files_failed=files_failed,
+                    )
+                    continue
+
+                # Check if extractor encountered an error
+                if getattr(extracted_doc, "extraction_status", "OK") == "ERROR":
+                    logger.warning(
+                        f"Extractor reported error on '{file_path}': {extracted_doc.error_message}"
+                    )
                     with get_db(self.db_path) as conn:
                         cursor = conn.cursor()
                         cursor.execute(
@@ -681,6 +753,7 @@ class SyncWorker:
                 stage="INDEXING",
                 status="COMPLETED",
                 files_processed=total_candidate_files,
+                files_failed=files_failed,
                 passages_created=total_passages_created,
             )
             logger.info(

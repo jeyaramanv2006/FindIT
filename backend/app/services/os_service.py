@@ -40,7 +40,8 @@ class OSService:
             FileNotFoundError: If the target does not exist.
             SecurityBoundaryError: If the target is outside all registered directories.
         """
-        canonical_target = target_path.expanduser().resolve()
+        target_path_obj = Path(target_path)
+        canonical_target = target_path_obj.expanduser().resolve()
 
         if not canonical_target.exists():
             raise FileNotFoundError(f"Target path does not exist: '{canonical_target}'")

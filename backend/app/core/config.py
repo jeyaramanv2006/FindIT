@@ -23,6 +23,9 @@ ALLOWED_ORIGINS = [
     "http://127.0.0.1:3000",
 ]
 
+# Maximum single file size allowed for text extraction and indexing (default 50MB)
+MAX_FILE_SIZE_BYTES = int(os.getenv("FINDIT_MAX_FILE_SIZE_BYTES", 50 * 1024 * 1024))
+
 # Supported file extensions for document indexing
 SUPPORTED_EXTENSIONS = {
     ".pdf",

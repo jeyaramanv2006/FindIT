@@ -203,10 +203,12 @@ class SearchService:
         faiss_index: Optional[FaissIndex] = None,
         bm25_index: Optional[BM25Index] = None,
         db_path: Optional[Path] = None,
+        faiss_idx: Optional[FaissIndex] = None,
+        bm25_idx: Optional[BM25Index] = None,
     ):
         self._embedder = embedder
-        self._faiss_index = faiss_index
-        self._bm25_index = bm25_index
+        self._faiss_index = faiss_index or faiss_idx
+        self._bm25_index = bm25_index or bm25_idx
         self.db_path = db_path
 
     @property

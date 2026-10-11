@@ -1,9 +1,16 @@
+import logging
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, status
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from starlette.exceptions import HTTPException as StarletteHTTPException
+
 from app.core import config
 from app.db.database import init_db
 from app.api import health, directories, search, passages, os_actions, sync
+
+logger = logging.getLogger("findit.api")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -27,6 +34,60 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    # Global Exception Handlers
+    @app.exception_handler(StarletteHTTPException)
+    async def http_exception_handler(request: Request, exc: StarletteHTTPException):
+        detail = exc.detail
+        if isinstance(detail, dict):
+            error_data = detail.get("error", detail)
+            return JSONResponse(
+                status_code=exc.status_code,
+                content={
+                    "detail": detail,
+                    "error": error_data,
+                },
+            )
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={
+                "detail": detail,
+                "error": {
+                    "code": f"HTTP_{exc.status_code}",
+                    "message": str(detail),
+                },
+            },
+        )
+
+    @app.exception_handler(RequestValidationError)
+    async def validation_exception_handler(request: Request, exc: RequestValidationError):
+        return JSONResponse(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            content={
+                "error": {
+                    "code": "VALIDATION_ERROR",
+                    "message": "Invalid request parameters or payload structure.",
+                    "details": exc.errors(),
+                }
+            },
+        )
+
+    @app.exception_handler(Exception)
+    async def unhandled_exception_handler(request: Request, exc: Exception):
+        logger.error(
+            f"Unhandled exception during {request.method} {request.url.path}: {exc}",
+            exc_info=True,
+        )
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content={
+                "error": {
+                    "code": "INTERNAL_SERVER_ERROR",
+                    "message": "An unexpected server error occurred.",
+                    "detail": str(exc),
+                }
+            },
+        )
 
     # Register routers with /api prefix
     app.include_router(health.router, prefix="/api")

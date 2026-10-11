@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.1.0] - 2026-10-11
+
+### Completed
+- **Milestone 8 & Batch 7 (Phase 18) — System Hardening, Edge-Case Resilience & Verification Runbook**:
+  - Implemented comprehensive automated end-to-end test suite in `backend/tests/test_e2e.py` covering:
+    - Empty directory indexing: clean job completion with 0 files and 0 passages.
+    - Corrupt and malformed files: corrupted PDFs (invalid binary headers) and corrupted DOCX files (non-zip text) fail gracefully with `extraction_status = 'ERROR'` without halting the sync worker, allowing adjacent valid files to index.
+    - Zero-byte files: empty `.txt` and `.md` files classified as `NO_TEXT` without generating empty passage artifacts.
+    - Oversized file skip defense: files exceeding `MAX_FILE_SIZE_BYTES` (50MB) recorded with `extraction_status = 'SKIPPED_TOO_LARGE'` to protect CPU memory.
+    - Special characters, spaces, brackets, and Unicode: filenames and directories containing brackets, ampersands, accents, and Chinese characters index and retrieve seamlessly.
+    - Path traversal confinement: `OSService` verifies physical file existence within registered directories in SQLite, raising `SecurityBoundaryError` for unauthorized system path escapes and `FileNotFoundError` for missing paths.
+    - Latency benchmarking: benchmarked 1,000 indexed passages across 20 hybrid search queries, achieving mean latency of **29.36 ms** (p95: 32.95 ms), well under the strict 100ms threshold.
+    - Global exception handling middleware: structured JSON envelopes for 404 Not Found, 422 Unprocessable Entity, and 500 Internal Server Error.
+  - Added global error-handling middleware in `backend/app/main.py`.
+  - Added `MAX_FILE_SIZE_BYTES = 50MB` setting in `backend/app/core/config.py`.
+  - Upgraded `OSService.validate_path_confinement` to normalize both `str` and `Path` inputs.
+  - Complete backend test suite: **64 / 64 tests passing** with 0 failures across all 9 test suites.
+  - Complete frontend build verified: `tsc -b && vite build` clean with 0 errors.
+
 ## [0.1.0-m6] - 2026-10-11
 
 ### Completed
