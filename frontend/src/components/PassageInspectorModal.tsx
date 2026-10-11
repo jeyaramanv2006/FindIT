@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import type { PassageDetail } from '../types';
+import { formatLocationLabel } from './SearchResultCard';
 
 interface PassageInspectorModalProps {
   passage: PassageDetail | null;
@@ -117,7 +118,7 @@ export const PassageInspectorModal: React.FC<PassageInspectorModalProps> = ({
                 <circle cx="12" cy="10" r="3"></circle>
               </svg>
               <span className="font-medium text-cocoa">
-                {passage.location_label}
+                {formatLocationLabel(passage.location_label, passage.file_type)}
               </span>
             </div>
             <div className="flex items-center gap-1.5 font-mono text-[11px]">

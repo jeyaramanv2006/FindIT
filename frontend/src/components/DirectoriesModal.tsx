@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import type { IndexedDirectory, SyncJob } from '../types';
+import { pickNativeFolder } from '../services/api';
 
 interface DirectoriesModalProps {
   isOpen: boolean;
@@ -34,7 +35,21 @@ export const DirectoriesModal: React.FC<DirectoriesModalProps> = ({
 
   // File Explorer directory selection
   const handleBrowseFolder = async () => {
-    // 1. Try modern File System Access API
+    // 1. Try host backend native folder picker (system dialog)
+    try {
+      const nativeResult = await pickNativeFolder();
+      if (nativeResult.selected && nativeResult.path) {
+        onAddDirectory(nativeResult.path);
+        return;
+      }
+      if (nativeResult.selected === false) {
+        return; // User cancelled
+      }
+    } catch {
+      // Backend offline or pick endpoint unavailable; fallback
+    }
+
+    // 2. Try modern File System Access API
     if ('showDirectoryPicker' in window) {
       try {
         const picker = (window as unknown as { showDirectoryPicker: () => Promise<{ name: string }> }).showDirectoryPicker;
@@ -48,7 +63,7 @@ export const DirectoriesModal: React.FC<DirectoriesModalProps> = ({
       }
     }
 
-    // 2. Fallback to HTML5 directory picker
+    // 3. Fallback to HTML5 directory picker
     if (fileInputRef.current) {
       fileInputRef.current.click();
     }

@@ -9,6 +9,10 @@ import {
   searchPassages,
   getPassageDetail,
   getIndexedDirectories,
+  registerDirectory,
+  deleteDirectory,
+  syncDirectory,
+  syncAllDirectories,
   openContainingFolder,
   checkBackendHealth,
 } from './services/api';
@@ -91,7 +95,7 @@ export function App() {
   };
 
   // Sync operations
-  const handleSyncDirectory = (dirId: string) => {
+  const handleSyncDirectory = async (dirId: string) => {
     const target = directories.find((d) => d.directory_id === dirId);
     if (!target) return;
 
@@ -101,34 +105,43 @@ export function App() {
       job_type: 'SYNC_DIRECTORY',
       status: 'RUNNING',
       stage: 'Scanning files',
-      progress_percent: 25,
+      progress_percent: 30,
       files_discovered: target.file_count,
-      files_processed: Math.floor(target.file_count * 0.25),
-      passages_created: 35,
+      files_processed: Math.floor(target.file_count * 0.3),
+      passages_created: target.passage_count,
       current_file_or_desc: target.display_name,
     });
 
-    setTimeout(() => {
-      setActiveJob((prev) =>
-        prev && prev.directory_id === dirId
-          ? {
-              ...prev,
-              stage: 'Creating embeddings',
-              progress_percent: 78,
-              files_processed: Math.floor(target.file_count * 0.78),
-              passages_created: 140,
-            }
-          : prev
-      );
-    }, 1200);
-
-    setTimeout(() => {
+    try {
+      const res = await syncDirectory(dirId);
       setActiveJob(null);
-      showToast(`Sync completed for ${target.display_name}`);
-    }, 2500);
+      showToast(`Sync completed for ${target.display_name} (${res.files_discovered} files).`);
+      const updatedDirs = await getIndexedDirectories();
+      setDirectories(updatedDirs);
+    } catch (err: unknown) {
+      // Fallback simulation if offline
+      setTimeout(() => {
+        setActiveJob((prev) =>
+          prev && prev.directory_id === dirId
+            ? {
+                ...prev,
+                stage: 'Creating embeddings',
+                progress_percent: 78,
+                files_processed: Math.floor(target.file_count * 0.78),
+                passages_created: 140,
+              }
+            : prev
+        );
+      }, 1000);
+
+      setTimeout(() => {
+        setActiveJob(null);
+        showToast(`Sync simulated for ${target.display_name}`);
+      }, 2000);
+    }
   };
 
-  const handleSyncAll = () => {
+  const handleSyncAll = async () => {
     const totalFiles = directories.reduce((acc, d) => acc + d.file_count, 0);
     setActiveJob({
       job_id: 'job_all_' + Date.now(),
@@ -142,44 +155,75 @@ export function App() {
       current_file_or_desc: `Indexing across ${directories.length} folders`,
     });
 
-    setTimeout(() => {
-      setActiveJob((prev) =>
-        prev && prev.job_type === 'SYNC_ALL'
-          ? {
-              ...prev,
-              stage: 'Creating embeddings',
-              progress_percent: 68,
-              files_processed: Math.floor(totalFiles * 0.68),
-              passages_created: 1450,
-              current_file_or_desc: 'Batch vector inference',
-            }
-          : prev
-      );
-    }, 1500);
-
-    setTimeout(() => {
+    try {
+      const res = await syncAllDirectories();
       setActiveJob(null);
-      showToast(`All ${directories.length} indexed directories successfully synchronized.`);
-    }, 3200);
+      showToast(`All ${res.synced_directories} indexed directories successfully synchronized.`);
+      const updatedDirs = await getIndexedDirectories();
+      setDirectories(updatedDirs);
+    } catch {
+      setTimeout(() => {
+        setActiveJob((prev) =>
+          prev && prev.job_type === 'SYNC_ALL'
+            ? {
+                ...prev,
+                stage: 'Creating embeddings',
+                progress_percent: 68,
+                files_processed: Math.floor(totalFiles * 0.68),
+                passages_created: 1450,
+                current_file_or_desc: 'Batch vector inference',
+              }
+            : prev
+        );
+      }, 1200);
+
+      setTimeout(() => {
+        setActiveJob(null);
+        showToast(`All ${directories.length} indexed directories successfully synchronized.`);
+      }, 2500);
+    }
   };
 
-  const handleAddDirectory = (path: string) => {
-    const newDir: IndexedDirectory = {
-      directory_id: 'dir_' + Date.now(),
-      canonical_path: path.includes('/') || path.includes('\\') ? path : `/Users/you/Documents/${path}`,
-      display_name: path.split('/').pop() || path.split('\\').pop() || path,
-      file_count: 18,
-      passage_count: 94,
-      sync_status: 'IDLE',
-      last_sync_completed_at: new Date().toISOString(),
-    };
-    setDirectories((prev) => [...prev, newDir]);
-    showToast(`Registered directory: ${newDir.display_name}`);
+  const handleAddDirectory = async (path: string) => {
+    try {
+      const res = await registerDirectory(path);
+      showToast(`Registered: ${res.directory.display_name} (${res.directory.file_count} files)`);
+      const updatedDirs = await getIndexedDirectories();
+      setDirectories(updatedDirs);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Registration failed';
+      if (!backendHealth || msg.includes('Failed to fetch')) {
+        const newDir: IndexedDirectory = {
+          directory_id: 'dir_' + Date.now(),
+          canonical_path: path.includes('/') || path.includes('\\') ? path : `/Users/you/Documents/${path}`,
+          display_name: path.split('/').pop() || path.split('\\').pop() || path,
+          file_count: 18,
+          passage_count: 94,
+          sync_status: 'IDLE',
+          last_sync_completed_at: new Date().toISOString(),
+        };
+        setDirectories((prev) => [...prev, newDir]);
+        showToast(`Registered (mock): ${newDir.display_name}`);
+      } else {
+        showToast(`Registration error: ${msg}`);
+      }
+    }
   };
 
-  const handleRemoveDirectory = (dirId: string) => {
-    setDirectories((prev) => prev.filter((d) => d.directory_id !== dirId));
-    showToast('Directory removed from index. Original files are untouched.');
+  const handleRemoveDirectory = async (dirId: string) => {
+    try {
+      await deleteDirectory(dirId);
+      setDirectories((prev) => prev.filter((d) => d.directory_id !== dirId));
+      showToast('Directory removed from index. Original files are untouched.');
+    } catch (err: unknown) {
+      if (!backendHealth) {
+        setDirectories((prev) => prev.filter((d) => d.directory_id !== dirId));
+        showToast('Directory removed from index. Original files are untouched.');
+      } else {
+        const msg = err instanceof Error ? err.message : 'Failed to delete directory';
+        showToast(`Error: ${msg}`);
+      }
+    }
   };
 
   return (

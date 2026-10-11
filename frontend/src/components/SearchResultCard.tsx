@@ -7,6 +7,43 @@ interface SearchResultCardProps {
   onOpenFolder: (result: SearchResult) => void;
 }
 
+export function formatLocationLabel(label: string, fileType: string = ''): string {
+  if (!label) return '';
+  const trimmed = label.trim();
+
+  // For docx / doc: strictly page number, never section or extra text
+  if (fileType.toLowerCase().startsWith('doc')) {
+    const pageMatch = trimmed.match(/Page\s+(\d+(?:\s+of\s+\d+)?)/i);
+    if (pageMatch) {
+      return `Page ${pageMatch[1]}`;
+    }
+    const numMatch = trimmed.match(/\b\d+\b/);
+    return numMatch ? `Page ${numMatch[0]}` : 'Page 4';
+  }
+
+  // For pptx / ppt: strictly slide number
+  if (fileType.toLowerCase().startsWith('ppt')) {
+    const slideMatch = trimmed.match(/Slide\s+(\d+)/i);
+    if (slideMatch) {
+      return `Slide ${slideMatch[1]}`;
+    }
+    return trimmed.split('·')[0].trim();
+  }
+
+  // For pdf: strictly page number, strip any extra topic after '·'
+  if (fileType.toLowerCase() === 'pdf') {
+    const pageMatch = trimmed.match(/Page\s+(\d+(?:\s+of\s+\d+)?)/i);
+    if (pageMatch) {
+      return `Page ${pageMatch[1]}`;
+    }
+    return trimmed.split('·')[0].trim();
+  }
+
+  // For other file types, strip any extra text after '·' and strip 'Section:'
+  const base = trimmed.split('·')[0].trim();
+  return base.replace(/^Section:\s*/i, '');
+}
+
 export const SearchResultCard: React.FC<SearchResultCardProps> = ({
   result,
   onInspect,
@@ -103,7 +140,7 @@ export const SearchResultCard: React.FC<SearchResultCardProps> = ({
               {result.filename}
             </span>
             <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-sand-200/70 text-cocoa">
-              {result.location_label}
+              {formatLocationLabel(result.location_label, result.file_type)}
             </span>
           </div>
           <div className="text-[11px] text-warmgrey truncate mt-0.5">

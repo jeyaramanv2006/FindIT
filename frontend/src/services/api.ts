@@ -53,7 +53,7 @@ export const MOCK_RESULTS: SearchResult[] = [
     canonical_path: '/Users/you/Developer/core-search/Project_Architecture.docx',
     display_path: '~/Developer/core-search',
     file_type: 'docx',
-    location_label: 'Section: Indexing Pipeline & Access Control',
+    location_label: 'Page 4',
     passage_preview:
       'The system utilizes FAISS for vector indexing and enforces SQLite persistence for metadata. Authentication architecture relies on local-first loopback binding rather than complex multi-user credential schemes...',
     hybrid_rank: 1,
@@ -101,7 +101,7 @@ export const MOCK_RESULTS: SearchResult[] = [
     canonical_path: '/Users/you/Documents/College/CS440/Distributed_Systems_Notes.pdf',
     display_path: '~/Documents/College/CS440',
     file_type: 'pdf',
-    location_label: 'Page 24 of 48 · Consensus & Token Auth',
+    location_label: 'Page 24 of 48',
     passage_preview:
       'Authentication architecture: A token lifecycle is enforced with short-lived session grants and refresh token rotation, guarding internal indexing endpoints from replay vulnerabilities...',
     hybrid_rank: 4,
@@ -117,7 +117,7 @@ export const MOCK_RESULTS: SearchResult[] = [
     canonical_path: '/Users/you/Developer/core-search/docs/Embedding_Worker_Spec.md',
     display_path: '~/Developer/core-search/docs',
     file_type: 'md',
-    location_label: 'Lines 45–80 · Local Vector Math',
+    location_label: 'Lines 45–80',
     passage_preview:
       'Dense embeddings generated with all-MiniLM-L6-v2 are unit-normalized to 384 dimensions. FAISS IndexFlatIP executes cosine similarity comparisons using pure inner-product calculations on CPU...',
     hybrid_rank: 5,
@@ -133,7 +133,7 @@ export const MOCK_RESULTS: SearchResult[] = [
     canonical_path: '/Users/you/Developer/core-search/src/security/auth_handler.py',
     display_path: '~/Developer/core-search/src/security',
     file_type: 'code',
-    location_label: 'Lines 112–138 · Bearer Token Verifier',
+    location_label: 'Lines 112–138',
     passage_preview:
       'def verify_bearer_token(auth_header: str) -> TokenPayload:\n    """Validates local loopback bearer token against current session secret."""\n    token = parse_authorization_header(auth_header)\n    return security_engine.verify_token_signature(token)',
     hybrid_rank: 6,
@@ -149,7 +149,7 @@ export const MOCK_RESULTS: SearchResult[] = [
     canonical_path: '/Users/you/Developer/core-search/config.example.toml',
     display_path: '~/Developer/core-search',
     file_type: 'config',
-    location_label: 'Lines 12–28 · [vector_db.credentials]',
+    location_label: 'Lines 12–28',
     passage_preview:
       '[indexing.faiss]\nmetric = "INNER_PRODUCT"\ndimensions = 384\nnormalize_vectors = true\n\n[security.network]\nbind_host = "127.0.0.1"\nallowed_origins = ["http://localhost:5173"]',
     hybrid_rank: 7,
@@ -168,13 +168,13 @@ export const MOCK_PASSAGE_DETAILS: Record<string, PassageDetail> = {
     display_path: '/Users/you/Developer/core-search/Project_Architecture.docx',
     canonical_path: '/Users/you/Developer/core-search/Project_Architecture.docx',
     file_type: 'docx',
-    location_label: 'Section: Indexing Pipeline & Access Control (Page 4)',
+    location_label: 'Page 4',
     text: `The system utilizes FAISS for vector indexing and enforces SQLite persistence for metadata. Authentication architecture relies on local-first loopback binding rather than complex multi-user credential schemes.
 
 During ingestion, the pipeline discovers files across user-approved roots, detects supported extensions, and initiates text extraction. Each passage chunk is bounded to approximately 250-500 tokens with a 20% overlap window. 
 
 When a query is received, semantic embeddings and lexical BM25 rankings are fused using Reciprocal Rank Fusion (RRF with k=60), guaranteeing robust recall across both conceptual paraphrases and exact function identifiers.`,
-    section_heading: 'Indexing Pipeline & Access Control',
+    page_number: 4,
     hybrid_rank: 1,
     semantic_rank: 2,
     lexical_rank: 1,
@@ -186,7 +186,7 @@ When a query is received, semantic embeddings and lexical BM25 rankings are fuse
     display_path: '/Users/you/Documents/College/CS440/Distributed_Systems_Notes.pdf',
     canonical_path: '/Users/you/Documents/College/CS440/Distributed_Systems_Notes.pdf',
     file_type: 'pdf',
-    location_label: 'Page 18 of 48 · Consensus & Token Auth',
+    location_label: 'Page 18 of 48',
     text: `Vector indexing over partitioned document stores requires a clear consensus mechanism. In Section 3.2, we detail the token authentication handshake exchanged across nodes during synchronization cycles.
 
 Every node must assert that local vectors correspond to the identical embedding model version before accepting partitioned weight updates. If vector dimensions diverge or models differ, partition sync is aborted to prevent vector space contamination.`,
@@ -202,7 +202,7 @@ Every node must assert that local vectors correspond to the identical embedding 
     display_path: '/Users/you/Documents/Research/Infosec/Security_Seminar.pptx',
     canonical_path: '/Users/you/Documents/Research/Infosec/Security_Seminar.pptx',
     file_type: 'pptx',
-    location_label: 'Slide 7 · Local Threat Model',
+    location_label: 'Slide 7',
     text: `Architectural principles of local index isolation:
 1. Prevent loopback rebinding: strictly reject host headers outside 127.0.0.1 or localhost.
 2. Enforce origin assertions: prevent malicious browser tabs from triggering background indexing.
@@ -299,6 +299,76 @@ export async function getIndexedDirectories(): Promise<IndexedDirectory[]> {
   return MOCK_DIRECTORIES;
 }
 
+export async function registerDirectory(
+  canonicalPath: string
+): Promise<{ directory: IndexedDirectory; initial_job_id: string }> {
+  const response = await fetch(`${API_BASE_URL}/directories`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ canonical_path: canonicalPath }),
+  });
+  if (!response.ok) {
+    const errData = await response.json().catch(() => null);
+    const msg = errData?.detail?.error?.message || errData?.detail || 'Failed to register directory';
+    throw new Error(msg);
+  }
+  return await response.json();
+}
+
+export async function deleteDirectory(
+  directoryId: string
+): Promise<{ success: boolean; directory_id: string; message: string }> {
+  const response = await fetch(`${API_BASE_URL}/directories/${directoryId}`, {
+    method: 'DELETE',
+  });
+  if (!response.ok) {
+    const errData = await response.json().catch(() => null);
+    const msg = errData?.detail?.error?.message || errData?.detail || 'Failed to delete directory';
+    throw new Error(msg);
+  }
+  return await response.json();
+}
+
+export async function syncDirectory(
+  directoryId: string
+): Promise<{ job_id: string; directory_id: string; status: string; files_discovered: number }> {
+  const response = await fetch(`${API_BASE_URL}/directories/${directoryId}/sync`, {
+    method: 'POST',
+  });
+  if (!response.ok) {
+    const errData = await response.json().catch(() => null);
+    const msg = errData?.detail?.error?.message || errData?.detail || 'Failed to sync directory';
+    throw new Error(msg);
+  }
+  return await response.json();
+}
+
+export async function syncAllDirectories(): Promise<{
+  status: string;
+  synced_directories: number;
+  results: Array<{ directory_id: string; status?: string; error?: string }>;
+}> {
+  const response = await fetch(`${API_BASE_URL}/directories/sync-all`, {
+    method: 'POST',
+  });
+  if (!response.ok) {
+    const errData = await response.json().catch(() => null);
+    const msg = errData?.detail?.error?.message || errData?.detail || 'Failed to sync all directories';
+    throw new Error(msg);
+  }
+  return await response.json();
+}
+
+export async function pickNativeFolder(): Promise<{ path: string | null; selected: boolean }> {
+  const response = await fetch(`${API_BASE_URL}/directories/pick`, {
+    method: 'POST',
+  });
+  if (!response.ok) {
+    throw new Error('Native folder picker request failed');
+  }
+  return await response.json();
+}
+
 export async function openContainingFolder(documentId: string): Promise<{ success: boolean; message: string }> {
   try {
     const response = await fetch(`${API_BASE_URL}/documents/${documentId}/open-folder`, {
@@ -312,3 +382,4 @@ export async function openContainingFolder(documentId: string): Promise<{ succes
   }
   return { success: true, message: 'Opened containing folder in native file explorer.' };
 }
+

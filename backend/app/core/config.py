@@ -27,9 +27,12 @@ ALLOWED_ORIGINS = [
 SUPPORTED_EXTENSIONS = {
     ".pdf",
     ".docx",
+    ".doc",
     ".pptx",
+    ".ppt",
     ".txt",
     ".md",
+    ".markdown",
     ".py",
     ".js",
     ".ts",
@@ -38,6 +41,34 @@ SUPPORTED_EXTENSIONS = {
     ".json",
     ".yaml",
     ".yml",
+    ".toml",
     ".html",
     ".css",
 }
+
+# Mapping extensions to canonical file types (pdf, pptx, docx, md, txt, code, config)
+EXTENSION_TO_FILE_TYPE = {
+    ".pdf": "pdf",
+    ".docx": "docx",
+    ".doc": "docx",
+    ".pptx": "pptx",
+    ".ppt": "pptx",
+    ".txt": "txt",
+    ".md": "md",
+    ".markdown": "md",
+    ".py": "code",
+    ".js": "code",
+    ".ts": "code",
+    ".tsx": "code",
+    ".jsx": "code",
+    ".html": "code",
+    ".css": "code",
+    ".json": "config",
+    ".yaml": "config",
+    ".yml": "config",
+    ".toml": "config",
+}
+
+def get_file_type(extension: str) -> str:
+    """Returns canonical file_type category for a file extension."""
+    return EXTENSION_TO_FILE_TYPE.get(extension.lower(), "txt")

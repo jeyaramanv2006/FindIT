@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.1.0-m2] - 2026-10-11
+
+### Completed
+- **Milestone 2 & Phase 2 — Directory Management & Discovery Engine**:
+  - Implemented `DirectoryService` in `backend/app/services/directory_service.py` supporting directory path canonicalization, system root drive rejection (`C:\`, `/`), overlap conflict detection, and file discovery.
+  - Implemented recursive directory scanner (`scan_files`) with SHA-256 fingerprinting, symlink confinement checks, and support for all target document extensions (`.pdf`, `.docx`, `.pptx`, `.md`, `.txt`, `.py`, `.ts`, `.json`, etc.).
+  - Added SQLite schema domain models in `backend/app/db/models.py` (`DirectoryModel`, `DirectorySummary`, `DocumentModel`, `PassageModel`, `IndexJobModel`).
+  - Implemented REST API route controllers in `backend/app/api/directories.py`:
+    - `GET /api/directories`: lists registered directories with live document and passage counts.
+    - `POST /api/directories`: validates and registers new directory root with initial scan and job creation.
+    - `DELETE /api/directories/{id}`: unlinks directory from database while preserving physical files on disk.
+    - `POST /api/directories/{id}/sync`: triggers incremental scan of single registered directory.
+    - `POST /api/directories/sync-all`: triggers batch sync across all registered directories.
+    - `POST /api/directories/pick`: native OS folder picker dialog bridge.
+  - Added comprehensive test suite in `backend/tests/test_directories.py` with 12 passing tests across database, health, directory CRUD, conflicts, root drive rejection, and mocked native picker.
+  - Wired live directory CRUD, sync, and native picker client functions into React frontend (`src/services/api.ts`, `src/components/DirectoriesModal.tsx`, `src/App.tsx`).
+
 ## [0.1.0-m1] - 2026-10-11
 
 ### Completed

@@ -1,8 +1,8 @@
 # Project Roadmap & Implementation Milestones — FindIT
 
-> **Current Status**: `MILESTONE 1 COMPLETED` | `MILESTONE 2 PENDING START`  
+> **Current Status**: `MILESTONES 1 & 2 COMPLETED` | `MILESTONE 3 PENDING START`  
 > **Frontend Design Status**: `COMPLETED IN GOOGLE STITCH & INTEGRATED`  
-> **Backend & Integration Status**: `MILESTONE 1 RUNTIME VERIFIED (127.0.0.1:8000)`  
+> **Backend & Integration Status**: `MILESTONES 1 & 2 RUNTIME & SUITE VERIFIED (127.0.0.1:8000)`  
 
 ---
 
@@ -43,7 +43,7 @@ gantt
   - Establish CORS allowlisting and `/api/health` diagnostic endpoint.
 - **Exit Criteria**: Frontend client successfully communicates with the local FastAPI backend.
 
-### Milestone 2 — Directory Registration & Scanning
+### Milestone 2 — Directory Registration & Scanning (`COMPLETED`)
 - **Scope**:
   - Implement OS folder picker flow / directory registration endpoint.
   - Build directory scanner with path canonicalization and directory boundary validation.
