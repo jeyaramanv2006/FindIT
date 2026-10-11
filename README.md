@@ -55,22 +55,17 @@ FindIT bridges human memory with your local storage. You select the local folder
 
 ## Visual Demo
 
-### Hybrid Search & Passage Results
-![FindIT Search Results](docs/assets/findit-results.png)
-*The results view features a persistent morphing header, active ranking strategy toggles (`Hybrid`, `Semantic`, `Lexical`), passage cards with precise location badges, matched keyword highlights, and direct "Open in folder" native explorer actions.*
+### 1. Hybrid Search & Ranked Passage Results
+![FindIT Search Results](./docs/assets/findit-results.png)
+*Results view featuring persistent morphing header, active ranking strategy toggles (`Hybrid`, `Semantic`, `Lexical`), passage cards with precise physical coordinates, and native OS folder reveal.*
 
-<br>
+### 2. Search Canvas & Hero Interface
+![FindIT Search Homepage](./docs/assets/findit-home.png)
+*Minimalist search canvas with real-time index telemetry, folder count badges, and terracotta contour background.*
 
-<details open>
-<summary><b>Additional Interface Views (Homepage & Directory Manager)</b></summary>
-<br>
-
-| Minimalist Search Canvas | Indexed Directories Manager |
-| :---: | :---: |
-| ![FindIT Homepage](docs/assets/findit-home.png) | ![FindIT Directories Modal](docs/assets/findit-directories.png) |
-| *Hero view with live backend connectivity badge and terracotta contour canvas.* | *Folder manager supporting native directory selection and real-time sync progress.* |
-
-</details>
+### 3. Indexed Folders Management
+![FindIT Directories Modal](./docs/assets/findit-directories.png)
+*Directory manager dialog supporting native OS directory selection, real-time background sync progress, and document counters.*
 
 ---
 
