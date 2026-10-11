@@ -229,9 +229,12 @@ class SearchService:
         limit: int = 10,
         offset: int = 0,
         pool_size: int = DEFAULT_CANDIDATE_POOL,
+        ranking_mode: str = "hybrid",
     ) -> SearchResponse:
         """
         Executes end-to-end hybrid retrieval for a search query.
+        Supports ranking_mode: 'hybrid' (default RRF), 'semantic' (FAISS dense), or 'lexical' (BM25 sparse).
+        All returned candidates retain hybrid_rank, semantic_rank, and lexical_rank.
         """
         stripped_query = query.strip()
         if not stripped_query:
@@ -261,8 +264,34 @@ class SearchService:
         if total_available == 0:
             return SearchResponse(query=query, total_available=0, results=[], next_offset=None)
 
-        # 4. Paginate candidates
-        paginated_candidates = fused_candidates[offset : offset + limit]
+        # 4. Order candidates according to requested ranking_mode
+        mode = (ranking_mode or "hybrid").lower().strip()
+        if mode == "semantic":
+            # Rank primarily by dense semantic rank (1, 2, ...), then lexical matches
+            ranked_candidates = sorted(
+                fused_candidates,
+                key=lambda x: (
+                    0 if x["semantic_rank"] is not None else 1,
+                    x["semantic_rank"] if x["semantic_rank"] is not None else 999999,
+                    x["hybrid_rank"],
+                ),
+            )
+        elif mode == "lexical":
+            # Rank primarily by sparse lexical rank (1, 2, ...), then semantic matches
+            ranked_candidates = sorted(
+                fused_candidates,
+                key=lambda x: (
+                    0 if x["lexical_rank"] is not None else 1,
+                    x["lexical_rank"] if x["lexical_rank"] is not None else 999999,
+                    x["hybrid_rank"],
+                ),
+            )
+        else:
+            # Default: hybrid reciprocal rank fusion order
+            ranked_candidates = fused_candidates
+
+        # 5. Paginate candidates
+        paginated_candidates = ranked_candidates[offset : offset + limit]
         target_chunk_ids = [c["chunk_id"] for c in paginated_candidates]
 
         # 5. Hydrate from SQLite

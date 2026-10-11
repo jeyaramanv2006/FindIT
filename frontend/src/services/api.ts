@@ -23,8 +23,9 @@ export async function checkBackendHealth(): Promise<HealthStatus | null> {
  */
 export async function searchPassages(
   query: string,
-  limit: number = 10,
-  offset: number = 0
+  limit: number = 20,
+  offset: number = 0,
+  rankingMode: 'hybrid' | 'semantic' | 'lexical' = 'hybrid'
 ): Promise<{ query: string; total_available: number; results: SearchResult[]; next_offset?: number | null }> {
   const trimmed = query.trim();
   if (!trimmed) {
@@ -35,7 +36,7 @@ export async function searchPassages(
     const response = await fetch(`${API_BASE_URL}/search`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query: trimmed, limit, offset }),
+      body: JSON.stringify({ query: trimmed, limit, offset, ranking_mode: rankingMode }),
     });
 
     if (response.ok) {

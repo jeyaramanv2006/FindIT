@@ -295,8 +295,20 @@ class TestAPIEndpoints:
         assert "results" in data_post
         assert data_post["query"] == "architecture"
 
-        # GET /api/search
-        resp_get = client.get("/api/search?q=architecture&limit=5")
+        # POST /api/search with ranking_mode="semantic"
+        resp_semantic = client.post("/api/search", json={"query": "architecture", "limit": 10, "ranking_mode": "semantic"})
+        assert resp_semantic.status_code == 200
+        data_sem = resp_semantic.json()
+        assert "results" in data_sem
+
+        # POST /api/search with ranking_mode="lexical"
+        resp_lexical = client.post("/api/search", json={"query": "architecture", "limit": 10, "ranking_mode": "lexical"})
+        assert resp_lexical.status_code == 200
+        data_lex = resp_lexical.json()
+        assert "results" in data_lex
+
+        # GET /api/search with ranking_mode query param
+        resp_get = client.get("/api/search?q=architecture&limit=5&ranking_mode=semantic")
         assert resp_get.status_code == 200
         data_get = resp_get.json()
         assert "results" in data_get

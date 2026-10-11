@@ -17,6 +17,7 @@ class SearchRequestBody(BaseModel):
     query: str = Field(..., min_length=1, description="Search query string")
     limit: int = Field(default=10, ge=1, le=100, description="Max passages to return")
     offset: int = Field(default=0, ge=0, description="Pagination offset")
+    ranking_mode: str = Field(default="hybrid", description="Ranking strategy: hybrid, semantic, or lexical")
     include_diagnostics: bool = Field(default=False, description="Include raw retriever diagnostics")
 
 
@@ -24,7 +25,8 @@ class SearchRequestBody(BaseModel):
 async def search_passages_post(body: SearchRequestBody):
     """
     POST /api/search
-    Executes hybrid dense + lexical search using Reciprocal Rank Fusion (k=60).
+    Executes hybrid dense + lexical search using Reciprocal Rank Fusion (k=60),
+    or ranks primarily by semantic (dense) or lexical (sparse) matching.
     """
     service = get_search_service()
     try:
@@ -32,6 +34,7 @@ async def search_passages_post(body: SearchRequestBody):
             query=body.query,
             limit=body.limit,
             offset=body.offset,
+            ranking_mode=body.ranking_mode,
         )
         return response
     except Exception as e:
@@ -46,10 +49,11 @@ async def search_passages_get(
     q: str = Query(..., min_length=1, description="Search query string"),
     limit: int = Query(default=10, ge=1, le=100, description="Max passages to return"),
     offset: int = Query(default=0, ge=0, description="Pagination offset"),
+    ranking_mode: str = Query(default="hybrid", description="Ranking strategy: hybrid, semantic, or lexical"),
 ):
     """
-    GET /api/search?q=...&limit=10&offset=0
-    Alternative GET endpoint for query-string-based hybrid search.
+    GET /api/search?q=...&limit=10&offset=0&ranking_mode=hybrid
+    Alternative GET endpoint for query-string-based search.
     """
     service = get_search_service()
     try:
@@ -57,6 +61,7 @@ async def search_passages_get(
             query=q,
             limit=limit,
             offset=offset,
+            ranking_mode=ranking_mode,
         )
         return response
     except Exception as e:

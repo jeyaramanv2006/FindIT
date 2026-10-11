@@ -22,12 +22,13 @@ import {
 
 export function App() {
   const [viewState, setViewState] = useState<'hero' | 'results'>('hero');
-  const [queryInput, setQueryInput] = useState('vector indexing and authentication architecture');
+  const [queryInput, setQueryInput] = useState('');
   const [activeQuery, setActiveQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
   const [totalAvailable, setTotalAvailable] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [pulseCount, setPulseCount] = useState(0);
+  const [sortBy, setSortBy] = useState<'hybrid' | 'semantic' | 'lexical'>('hybrid');
 
   // Popover & Modal States
   const [rankingPopoverOpen, setRankingPopoverOpen] = useState(false);
@@ -42,6 +43,28 @@ export function App() {
 
   const searchInputRef = useRef<HTMLInputElement | null>(null);
 
+  const totalFilesIndexed = directories.reduce((acc, d) => acc + (d?.file_count || 0), 0);
+
+  const sortedResults = React.useMemo(() => {
+    if (sortBy === 'semantic') {
+      return [...results].sort((a, b) => {
+        const aSem = a.semantic_rank != null ? a.semantic_rank : 999999;
+        const bSem = b.semantic_rank != null ? b.semantic_rank : 999999;
+        if (aSem !== bSem) return aSem - bSem;
+        return (a.hybrid_rank ?? 99999) - (b.hybrid_rank ?? 99999);
+      });
+    }
+    if (sortBy === 'lexical') {
+      return [...results].sort((a, b) => {
+        const aLex = a.lexical_rank != null ? a.lexical_rank : 999999;
+        const bLex = b.lexical_rank != null ? b.lexical_rank : 999999;
+        if (aLex !== bLex) return aLex - bLex;
+        return (a.hybrid_rank ?? 99999) - (b.hybrid_rank ?? 99999);
+      });
+    }
+    return [...results].sort((a, b) => (a.hybrid_rank ?? 99999) - (b.hybrid_rank ?? 99999));
+  }, [results, sortBy]);
+
   // Load directories and backend health on mount
   useEffect(() => {
     checkBackendHealth().then((status) => {
@@ -55,7 +78,10 @@ export function App() {
     setTimeout(() => setToastMessage(null), 3000);
   };
 
-  const executeSearch = async (searchTerm: string) => {
+  const executeSearch = async (
+    searchTerm: string,
+    mode: 'hybrid' | 'semantic' | 'lexical' = sortBy
+  ) => {
     if (!searchTerm.trim()) return;
 
     setPulseCount((c) => c + 1);
@@ -65,7 +91,7 @@ export function App() {
     setRankingPopoverOpen(false);
 
     try {
-      const data = await searchPassages(searchTerm.trim(), 10, 0);
+      const data = await searchPassages(searchTerm.trim(), 20, 0, mode);
       setResults(data.results);
       setTotalAvailable(data.total_available);
     } catch {
@@ -75,9 +101,16 @@ export function App() {
     }
   };
 
+  const handleRankingModeChange = (newMode: 'hybrid' | 'semantic' | 'lexical') => {
+    setSortBy(newMode);
+    if (activeQuery) {
+      executeSearch(activeQuery, newMode);
+    }
+  };
+
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    executeSearch(queryInput);
+    executeSearch(queryInput, sortBy);
   };
 
   const handleClear = () => {
@@ -288,7 +321,7 @@ export function App() {
       >
         <div
           className={`w-full mx-auto flex flex-col items-center ${
-            viewState === 'results' ? 'max-w-5xl' : 'max-w-4xl'
+            viewState === 'results' ? 'max-w-6xl' : 'max-w-4xl'
           }`}
         >
           {/* HERO CENTERED BRAND & TAGLINE (Visible in Hero state, smoothly collapses in results) */}
@@ -378,14 +411,75 @@ export function App() {
                 </div>
               </form>
 
-              {/* Ranking Mode Popover in Hero View */}
-              <RankingPopover
-                isOpen={rankingPopoverOpen}
-                onClose={() => setRankingPopoverOpen(false)}
-                onToggle={() => setRankingPopoverOpen(!rankingPopoverOpen)}
-              />
+              {/* Interactive Ranking Mode Selector on Homepage */}
+              <div className="mt-5 flex flex-wrap items-center justify-center gap-3 z-20 select-none">
+                <span className="text-xs text-warmgrey font-semibold uppercase tracking-wider">Rank by:</span>
+                <div className="inline-flex items-center p-1 rounded-xl bg-surface-canvas/90 backdrop-blur-sm border border-[#E3D2BE] shadow-xs text-xs gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setSortBy('hybrid')}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                      sortBy === 'hybrid'
+                        ? 'bg-[#9E2F2B] text-white shadow-xs font-semibold'
+                        : 'text-warmgrey hover:text-cocoa hover:bg-sand-200/60'
+                    }`}
+                    title="Rank by Reciprocal Rank Fusion combining vector semantics and keyword search"
+                  >
+                    <span
+                      className={`w-2 h-2 rounded-full ${
+                        sortBy === 'hybrid' ? 'bg-white' : 'bg-brick'
+                      }`}
+                    />
+                    <span>Hybrid</span>
+                  </button>
 
-              {/* Local Runtime Status Badge in Hero View */}
+                  <button
+                    type="button"
+                    onClick={() => setSortBy('semantic')}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                      sortBy === 'semantic'
+                        ? 'bg-[#9E2F2B] text-white shadow-xs font-semibold'
+                        : 'text-warmgrey hover:text-cocoa hover:bg-sand-200/60'
+                    }`}
+                    title="Rank by dense vector embedding similarity (FAISS)"
+                  >
+                    <span
+                      className={`w-2 h-2 rounded-full ${
+                        sortBy === 'semantic' ? 'bg-white' : 'bg-sand-400'
+                      }`}
+                    />
+                    <span>Semantic</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setSortBy('lexical')}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                      sortBy === 'lexical'
+                        ? 'bg-[#9E2F2B] text-white shadow-xs font-semibold'
+                        : 'text-warmgrey hover:text-cocoa hover:bg-sand-200/60'
+                    }`}
+                    title="Rank by sparse keyword term frequency (BM25)"
+                  >
+                    <span
+                      className={`w-2 h-2 rounded-full ${
+                        sortBy === 'lexical' ? 'bg-white' : 'bg-sand-400'
+                      }`}
+                    />
+                    <span>Lexical</span>
+                  </button>
+                </div>
+
+                <RankingPopover
+                  isOpen={rankingPopoverOpen}
+                  onClose={() => setRankingPopoverOpen(false)}
+                  onToggle={() => setRankingPopoverOpen(!rankingPopoverOpen)}
+                  currentMode={sortBy}
+                  onSelectMode={(mode) => setSortBy(mode)}
+                />
+              </div>
+
+              {/* Indexed statistics in Hero View (Folder & File counts) */}
               <div className="mt-5 flex items-center justify-center gap-3 text-xs text-warmgrey select-none">
                 <div
                   className="flex items-center gap-1.5 cursor-pointer hover:text-brick transition-colors"
@@ -393,34 +487,23 @@ export function App() {
                   title="Manage indexed folders"
                 >
                   <span className="material-symbols-outlined text-[15px]">folder</span>
-                  <span>{directories.length} folders indexed</span>
+                  <span>{directories.length} {directories.length === 1 ? 'folder' : 'folders'} indexed</span>
                 </div>
                 <span className="text-sand-300">·</span>
                 <div
-                  className="flex items-center gap-1.5"
-                  title={
-                    backendHealth
-                      ? `Connected to local FastAPI backend v${backendHealth.version} (127.0.0.1:8000)`
-                      : 'Local backend is starting or offline'
-                  }
+                  className="flex items-center gap-1.5 cursor-pointer hover:text-brick transition-colors"
+                  onClick={() => setFoldersModalOpen(true)}
+                  title="Manage indexed folders"
                 >
-                  <span
-                    className={`w-2 h-2 rounded-full transition-colors ${
-                      backendHealth ? 'bg-emerald-600' : 'bg-amber-500'
-                    }`}
-                  />
-                  <span>
-                    {backendHealth
-                      ? `Runtime: 127.0.0.1:8000 (v${backendHealth.version})`
-                      : 'Runtime: Standby'}
-                  </span>
+                  <span className="material-symbols-outlined text-[15px]">description</span>
+                  <span>{totalFilesIndexed} {totalFilesIndexed === 1 ? 'file' : 'files'} indexed</span>
                 </div>
               </div>
             </div>
           ) : (
-            /* RESULTS MODE: Responsive 3-Column Header Bar with Zero Overlap */
+            /* RESULTS MODE: Extended Search Bar Header with No Tagline */
             <div className="w-full flex items-center justify-between gap-3 sm:gap-4 md:gap-6">
-              {/* Left Column: Fixed / Natural Brand Wordmark */}
+              {/* Left Column: Wordmark */}
               <div className="shrink-0 flex items-center">
                 <div
                   id="headerLeftWordmark"
@@ -432,14 +515,11 @@ export function App() {
                     Find<span className="text-brick font-bold">IT</span>
                     <span className="inline-block w-1.5 h-1.5 rounded-full bg-brick ml-0.5 align-middle" />
                   </div>
-                  <span className="hidden lg:inline text-xs font-normal text-warmgrey border-l border-[#E3D2BE] pl-2.5 ml-1">
-                    Find what you remember
-                  </span>
                 </div>
               </div>
 
-              {/* Center Column: Search Input Bar (min-w-0 prevents flex blowout) */}
-              <div className="flex-1 w-full max-w-2xl min-w-0 mx-auto">
+              {/* Center Column: Extended Search Input Bar */}
+              <div className="flex-1 w-full max-w-4xl min-w-0 mx-2 sm:mx-4">
                 <form onSubmit={handleFormSubmit} className="relative w-full">
                   <div className="w-full relative flex items-center rounded-2xl bg-[#FFFEFB] border border-[#9E2F2B]/40 hover:border-[#9E2F2B] focus-within:border-[#9E2F2B] px-3.5 py-2 shadow-xs focus-within:shadow-[0_0_0_3px_rgba(158,47,43,0.14)] transition-all duration-200">
                     <div className="pr-2.5 flex items-center justify-center text-text-secondary pointer-events-none group-focus-within:text-primary-container transition-colors shrink-0">
@@ -505,14 +585,10 @@ export function App() {
                 <div
                   onClick={() => setFoldersModalOpen(true)}
                   className="flex items-center gap-1.5 text-xs text-warmgrey font-medium pl-1 sm:pl-2 sm:border-l sm:border-sand-300 cursor-pointer hover:text-brick transition-colors whitespace-nowrap"
-                  title={
-                    backendHealth
-                      ? `Local Runtime: 127.0.0.1:8000 (v${backendHealth.version}) · ${directories.length} folders indexed`
-                      : `${directories.length} folders indexed`
-                  }
+                  title={`${directories.length} folders · ${totalFilesIndexed} files indexed`}
                 >
                   <span className="w-2 h-2 rounded-full bg-emerald-600 shrink-0" />
-                  <span className="hidden sm:inline whitespace-nowrap">{directories.length} folders indexed</span>
+                  <span className="hidden sm:inline whitespace-nowrap">{directories.length} folders · {totalFilesIndexed} files</span>
                 </div>
               </div>
             </div>
@@ -522,34 +598,70 @@ export function App() {
 
       {/* MAIN UNIFIED SEARCH RESULTS REGION */}
       {viewState === 'results' && (
-        <main className="view-transition flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 py-6 pb-20 animate-in fade-in slide-in-from-bottom-2 duration-300">
-          {/* RESULTS SUMMARY BAR */}
-          <div className="flex items-center justify-between mb-6 pb-3 border-b border-[#E3D2BE]/60">
-            <div className="flex flex-wrap items-baseline gap-2">
-              <h2 className="text-base font-semibold text-cocoa tracking-tight">Search results</h2>
-              <span className="text-xs text-warmgrey">
-                for <span className="font-medium text-cocoa">"{activeQuery}"</span>
-              </span>
+        <main className="view-transition flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 py-6 pb-20 animate-in fade-in slide-in-from-bottom-2 duration-300">
+          {/* Centered Ranking Modes Selector fitted in middle between Search Bar and Results */}
+          <div className="flex flex-col items-center justify-center gap-2 mb-8">
+            <div className="inline-flex items-center p-1 rounded-2xl bg-surface-canvas/90 backdrop-blur-md border border-[#E3D2BE] shadow-[0_2px_12px_-2px_rgba(41,37,34,0.06)] text-xs gap-1.5">
+              <span className="text-xs text-warmgrey font-semibold uppercase tracking-wider pl-2.5 pr-1">Rank by:</span>
+              <button
+                type="button"
+                onClick={() => handleRankingModeChange('hybrid')}
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-medium transition-all ${
+                  sortBy === 'hybrid'
+                    ? 'bg-[#9E2F2B] text-white shadow-xs font-semibold'
+                    : 'text-warmgrey hover:text-cocoa hover:bg-sand-200/70'
+                }`}
+                title="Rank by Reciprocal Rank Fusion combining semantics and keyword search"
+              >
+                <span
+                  className={`w-2 h-2 rounded-full ${
+                    sortBy === 'hybrid' ? 'bg-white' : 'bg-brick'
+                  }`}
+                />
+                <span>Hybrid</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleRankingModeChange('semantic')}
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-medium transition-all ${
+                  sortBy === 'semantic'
+                    ? 'bg-[#9E2F2B] text-white shadow-xs font-semibold'
+                    : 'text-warmgrey hover:text-cocoa hover:bg-sand-200/70'
+                }`}
+                title="Rank by dense vector embedding similarity (FAISS)"
+              >
+                <span
+                  className={`w-2 h-2 rounded-full ${
+                    sortBy === 'semantic' ? 'bg-white' : 'bg-sand-400'
+                  }`}
+                />
+                <span>Semantic</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleRankingModeChange('lexical')}
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-medium transition-all ${
+                  sortBy === 'lexical'
+                    ? 'bg-[#9E2F2B] text-white shadow-xs font-semibold'
+                    : 'text-warmgrey hover:text-cocoa hover:bg-sand-200/70'
+                }`}
+                title="Rank by sparse keyword term frequency (BM25)"
+              >
+                <span
+                  className={`w-2 h-2 rounded-full ${
+                    sortBy === 'lexical' ? 'bg-white' : 'bg-sand-400'
+                  }`}
+                />
+                <span>Lexical</span>
+              </button>
             </div>
-            <div className="flex items-center gap-2 text-xs text-warmgrey shrink-0">
-              <span className="font-mono text-[11px] text-warmgrey">
-                {totalAvailable} matching passages across {Math.min(5, totalAvailable)} files
-              </span>
-              <span className="hidden md:inline-block text-sand-300">·</span>
-              <div className="hidden md:flex items-center gap-2 text-[11px] text-warmgrey">
-                <span className="flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-brick" />
-                  <span>Hybrid</span>
-                </span>
-                <span className="flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-sand-400" />
-                  <span>Semantic</span>
-                </span>
-                <span className="flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-sand-400" />
-                  <span>Lexical</span>
-                </span>
-              </div>
+
+            <div className="text-xs text-warmgrey font-mono flex items-center gap-2">
+              <span>{totalAvailable} matching {totalAvailable === 1 ? 'passage' : 'passages'}</span>
+              <span>·</span>
+              <span>for "{activeQuery}"</span>
             </div>
           </div>
 
@@ -584,12 +696,13 @@ export function App() {
           )}
 
           {/* UNIFIED RESULTS LIST */}
-          {!isLoading && results.length > 0 && (
+          {!isLoading && sortedResults.length > 0 && (
             <section aria-label="Search passages" className="space-y-2.5 mb-10">
-              {results.map((result) => (
+              {sortedResults.map((result) => (
                 <SearchResultCard
                   key={result.chunk_id}
                   result={result}
+                  rankingMode={sortBy}
                   onInspect={handleInspectPassage}
                   onOpenFolder={handleOpenFolder}
                 />

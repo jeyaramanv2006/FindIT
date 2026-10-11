@@ -123,10 +123,15 @@ class OSService:
 
         try:
             if sys.platform == "win32":
-                # explorer.exe /select,"C:\path\to\file"
+                # In Windows Explorer, /select,"path" requires /select, to be unquoted.
+                # Passing a single command string avoids Python enclosing the entire argument in quotes.
                 win_path = os.path.normpath(normalized)
-                logger.info(f"Launching Windows Explorer: explorer.exe /select,\"{win_path}\"")
-                subprocess.Popen(["explorer.exe", f"/select,{win_path}"])
+                if target.is_file():
+                    cmd = f'explorer.exe /select,"{win_path}"'
+                else:
+                    cmd = f'explorer.exe "{win_path}"'
+                logger.info(f"Launching Windows Explorer: {cmd}")
+                subprocess.Popen(cmd)
             elif sys.platform == "darwin":
                 # macOS open -R "path"
                 logger.info(f"Launching macOS Finder: open -R {normalized}")
