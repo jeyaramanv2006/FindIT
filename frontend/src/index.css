@@ -1,0 +1,68 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html, body {
+    margin: 0;
+    padding: 0;
+    background-color: #F8F4EC;
+    color: #292522;
+    font-family: 'Manrope', 'Inter', sans-serif;
+  }
+}
+
+/* Custom subtle warm scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(237, 227, 212, 0.4);
+}
+::-webkit-scrollbar-thumb {
+  background: #E3D2BE;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #CDB9A3;
+}
+
+/* Text match highlight */
+.match-highlight {
+  background-color: #FCE8E6;
+  color: #7D231F;
+  border-radius: 3px;
+  padding: 1px 4px;
+  font-weight: 600;
+  box-shadow: 0 0 0 1px rgba(158, 47, 43, 0.12);
+}
+
+/* Modal backdrop with warm blur */
+.modal-backdrop {
+  background: rgba(31, 27, 24, 0.4);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+/* Focus ring accessibility */
+.focus-ring:focus-visible {
+  outline: none;
+  border-color: #9E2F2B;
+  box-shadow: 0 0 0 3px rgba(158, 47, 43, 0.18);
+}
+
+/* Smooth view transition helper classes */
+.view-transition {
+  transition: all 400ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #kinetic-terracotta-canvas {
+    display: none !important;
+  }
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}
