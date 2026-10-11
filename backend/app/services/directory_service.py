@@ -151,7 +151,7 @@ class DirectoryService:
                             document_id, directory_id, canonical_path, filename,
                             extension, file_type, size_bytes, modified_time,
                             content_fingerprint, extraction_status, last_indexed_at
-                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'OK', ?)
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDING', ?)
                         ON CONFLICT(canonical_path) DO UPDATE SET
                             size_bytes = excluded.size_bytes,
                             modified_time = excluded.modified_time,

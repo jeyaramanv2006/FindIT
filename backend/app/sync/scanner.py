@@ -127,9 +127,11 @@ class ScannerService:
             cursor = conn.cursor()
             cursor.execute(
                 """
-                SELECT document_id, canonical_path, filename, size_bytes, modified_time, content_fingerprint
-                FROM documents
-                WHERE directory_id = ?;
+                SELECT d.document_id, d.canonical_path, d.filename, d.size_bytes, d.modified_time, d.content_fingerprint,
+                       d.extraction_status,
+                       (SELECT COUNT(1) FROM passages p WHERE p.document_id = d.document_id) AS passage_count
+                FROM documents d
+                WHERE d.directory_id = ?;
                 """,
                 (directory_id,),
             )
@@ -143,6 +145,8 @@ class ScannerService:
                     "size_bytes": r["size_bytes"],
                     "modified_time": r["modified_time"],
                     "content_fingerprint": r["content_fingerprint"],
+                    "extraction_status": r["extraction_status"],
+                    "passage_count": r["passage_count"],
                 }
 
         new_files: List[ScannedFile] = []
@@ -209,9 +213,12 @@ class ScannerService:
                         )
                     else:
                         existing = existing_docs[norm_path]
-                        # Check fast path: size and mtime matching
+                        is_already_indexed = existing.get("extraction_status") != "PENDING"
+
+                        # Check fast path: size and mtime matching and already indexed
                         if (
                             not force_rehash
+                            and is_already_indexed
                             and existing["size_bytes"] == size_bytes
                             and existing["modified_time"] == mtime
                         ):
@@ -228,10 +235,11 @@ class ScannerService:
                                 )
                             )
                         else:
-                            # Size or mtime changed: compute SHA-256 fingerprint to verify content
+                            # Size, mtime changed or pending extraction: compute SHA-256 fingerprint to verify content
                             sha256 = compute_sha256(file_path)
                             if (
-                                existing["content_fingerprint"]
+                                is_already_indexed
+                                and existing["content_fingerprint"]
                                 and sha256 == existing["content_fingerprint"]
                                 and existing["size_bytes"] == size_bytes
                             ):
