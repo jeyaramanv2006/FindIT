@@ -56,3 +56,12 @@ export interface SyncJob {
   passages_created: number;
   current_file_or_desc?: string;
 }
+
+export interface HealthStatus {
+  status: string;
+  version: string;
+  model_loaded: boolean;
+  embedding_model?: string;
+  registered_directories: number;
+  total_passages_indexed: number;
+}

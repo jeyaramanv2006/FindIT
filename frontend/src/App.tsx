@@ -4,12 +4,13 @@ import { RankingPopover } from './components/RankingPopover';
 import { SearchResultCard } from './components/SearchResultCard';
 import { PassageInspectorModal } from './components/PassageInspectorModal';
 import { DirectoriesModal } from './components/DirectoriesModal';
-import type { SearchResult, PassageDetail, IndexedDirectory, SyncJob } from './types';
+import type { SearchResult, PassageDetail, IndexedDirectory, SyncJob, HealthStatus } from './types';
 import {
   searchPassages,
   getPassageDetail,
   getIndexedDirectories,
   openContainingFolder,
+  checkBackendHealth,
 } from './services/api';
 
 export function App() {
@@ -28,13 +29,17 @@ export function App() {
 
   // Directories & Sync state
   const [directories, setDirectories] = useState<IndexedDirectory[]>([]);
+  const [backendHealth, setBackendHealth] = useState<HealthStatus | null>(null);
   const [activeJob, setActiveJob] = useState<SyncJob | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const searchInputRef = useRef<HTMLInputElement | null>(null);
 
-  // Load directories on mount
+  // Load directories and backend health on mount
   useEffect(() => {
+    checkBackendHealth().then((status) => {
+      setBackendHealth(status);
+    });
     getIndexedDirectories().then((dirs) => setDirectories(dirs));
   }, []);
 
@@ -199,7 +204,11 @@ export function App() {
             : 'pt-16 pb-6'
         }`}
       >
-        <div className="max-w-4xl mx-auto flex flex-col items-center">
+        <div
+          className={`w-full mx-auto flex flex-col items-center ${
+            viewState === 'results' ? 'max-w-5xl' : 'max-w-4xl'
+          }`}
+        >
           {/* HERO CENTERED BRAND & TAGLINE (Visible in Hero state, smoothly collapses in results) */}
           <div
             id="heroCenterBlock"
@@ -293,12 +302,44 @@ export function App() {
                 onClose={() => setRankingPopoverOpen(false)}
                 onToggle={() => setRankingPopoverOpen(!rankingPopoverOpen)}
               />
+
+              {/* Local Runtime Status Badge in Hero View */}
+              <div className="mt-5 flex items-center justify-center gap-3 text-xs text-warmgrey select-none">
+                <div
+                  className="flex items-center gap-1.5 cursor-pointer hover:text-brick transition-colors"
+                  onClick={() => setFoldersModalOpen(true)}
+                  title="Manage indexed folders"
+                >
+                  <span className="material-symbols-outlined text-[15px]">folder</span>
+                  <span>{directories.length} folders indexed</span>
+                </div>
+                <span className="text-sand-300">·</span>
+                <div
+                  className="flex items-center gap-1.5"
+                  title={
+                    backendHealth
+                      ? `Connected to local FastAPI backend v${backendHealth.version} (127.0.0.1:8000)`
+                      : 'Local backend is starting or offline'
+                  }
+                >
+                  <span
+                    className={`w-2 h-2 rounded-full transition-colors ${
+                      backendHealth ? 'bg-emerald-600' : 'bg-amber-500'
+                    }`}
+                  />
+                  <span>
+                    {backendHealth
+                      ? `Runtime: 127.0.0.1:8000 (v${backendHealth.version})`
+                      : 'Runtime: Standby'}
+                  </span>
+                </div>
+              </div>
             </div>
           ) : (
-            /* RESULTS MODE: Symmetrical 3-Column Layout Keeping Search Bar Centered */
-            <div className="w-full flex items-center justify-between gap-3 sm:gap-4">
-              {/* Left Column: Fixed Width */}
-              <div className="w-[160px] sm:w-[200px] shrink-0 flex items-center">
+            /* RESULTS MODE: Responsive 3-Column Header Bar with Zero Overlap */
+            <div className="w-full flex items-center justify-between gap-3 sm:gap-4 md:gap-6">
+              {/* Left Column: Fixed / Natural Brand Wordmark */}
+              <div className="shrink-0 flex items-center">
                 <div
                   id="headerLeftWordmark"
                   className="view-transition flex items-center gap-2 cursor-pointer animate-in fade-in"
@@ -309,17 +350,17 @@ export function App() {
                     Find<span className="text-brick font-bold">IT</span>
                     <span className="inline-block w-1.5 h-1.5 rounded-full bg-brick ml-0.5 align-middle" />
                   </div>
-                  <span className="hidden lg:inline text-xs font-normal text-warmgrey border-l border-[#E3D2BE] pl-2 ml-1">
+                  <span className="hidden lg:inline text-xs font-normal text-warmgrey border-l border-[#E3D2BE] pl-2.5 ml-1">
                     Find what you remember
                   </span>
                 </div>
               </div>
 
-              {/* Center Column: Search Input Bar Centered */}
-              <div className="flex-1 w-full max-w-2xl mx-auto">
+              {/* Center Column: Search Input Bar (min-w-0 prevents flex blowout) */}
+              <div className="flex-1 w-full max-w-2xl min-w-0 mx-auto">
                 <form onSubmit={handleFormSubmit} className="relative w-full">
                   <div className="w-full relative flex items-center rounded-2xl bg-[#FFFEFB] border border-[#9E2F2B]/40 hover:border-[#9E2F2B] focus-within:border-[#9E2F2B] px-3.5 py-2 shadow-xs focus-within:shadow-[0_0_0_3px_rgba(158,47,43,0.14)] transition-all duration-200">
-                    <div className="pr-2.5 flex items-center justify-center text-text-secondary pointer-events-none group-focus-within:text-primary-container transition-colors">
+                    <div className="pr-2.5 flex items-center justify-center text-text-secondary pointer-events-none group-focus-within:text-primary-container transition-colors shrink-0">
                       <span className="material-symbols-outlined text-[20px]">search</span>
                     </div>
 
@@ -331,7 +372,7 @@ export function App() {
                       value={queryInput}
                       onChange={(e) => setQueryInput(e.target.value)}
                       placeholder="Search your documents…"
-                      className="w-full bg-transparent font-body-lg text-sm md:text-base text-text-primary placeholder:text-text-secondary/70 focus:outline-none"
+                      className="w-full min-w-0 bg-transparent font-body-lg text-sm md:text-base text-text-primary placeholder:text-text-secondary/70 focus:outline-none"
                     />
 
                     <div className="flex items-center gap-1.5 pl-2 shrink-0">
@@ -369,21 +410,27 @@ export function App() {
                 </form>
               </div>
 
-              {/* Right Column: Exact Equal Width for True Center Symmetry */}
-              <div className="w-[160px] sm:w-[200px] shrink-0 flex items-center justify-end gap-2.5">
+              {/* Right Column: Hero view button and Index Status (shrink-0, whitespace-nowrap) */}
+              <div className="shrink-0 flex items-center gap-2.5 whitespace-nowrap">
                 <button
                   type="button"
                   onClick={() => setViewState('hero')}
-                  className="hidden sm:inline-flex items-center px-2.5 py-1 text-xs font-medium text-warmgrey hover:text-cocoa rounded-full bg-sand-200/50 hover:bg-sand-200 border border-sand-300/60 transition-colors"
+                  className="hidden sm:inline-flex items-center px-2.5 py-1 text-xs font-medium text-warmgrey hover:text-cocoa rounded-full bg-sand-200/50 hover:bg-sand-200 border border-sand-300/60 transition-colors whitespace-nowrap"
+                  title="Switch view to hero homepage"
                 >
                   Hero view
                 </button>
                 <div
                   onClick={() => setFoldersModalOpen(true)}
-                  className="flex items-center gap-1.5 text-xs text-warmgrey font-medium pl-2 sm:border-l sm:border-sand-300 cursor-pointer hover:text-brick transition-colors"
+                  className="flex items-center gap-1.5 text-xs text-warmgrey font-medium pl-1 sm:pl-2 sm:border-l sm:border-sand-300 cursor-pointer hover:text-brick transition-colors whitespace-nowrap"
+                  title={
+                    backendHealth
+                      ? `Local Runtime: 127.0.0.1:8000 (v${backendHealth.version}) · ${directories.length} folders indexed`
+                      : `${directories.length} folders indexed`
+                  }
                 >
-                  <span className="w-2 h-2 rounded-full bg-emerald-600" />
-                  <span className="hidden md:inline">{directories.length} folders indexed</span>
+                  <span className="w-2 h-2 rounded-full bg-emerald-600 shrink-0" />
+                  <span className="hidden sm:inline whitespace-nowrap">{directories.length} folders indexed</span>
                 </div>
               </div>
             </div>

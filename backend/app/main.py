@@ -1,13 +1,22 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core import config
+from app.db.database import init_db
 from app.api import health
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Initialize SQLite database with WAL mode and schema tables
+    init_db()
+    yield
 
 def create_app() -> FastAPI:
     app = FastAPI(
         title="FindIT API",
         description="Local-first hybrid semantic & lexical desktop search engine backend.",
-        version="1.0.0",
+        version="0.1.0",
+        lifespan=lifespan,
     )
 
     # Configure CORS for local development with frontend

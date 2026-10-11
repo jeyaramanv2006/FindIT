@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.1.0-m1] - 2026-10-11
+
+### Completed
+- **Milestone 1 — Project Skeleton & Local Runtime**:
+  - Implemented and verified SQLite database initialization in WAL mode (`findit.db`) enforcing foreign keys and full schema DDL matching `docs/DATABASE.md` (`directories`, `documents`, `passages`, `index_jobs`).
+  - Added unit test suite `tests/test_database.py` validating WAL pragmas, schema tables, and cascade deletion.
+  - Implemented `/api/health` diagnostic endpoint matching `docs/API.md` response contract, verified via unit test (`tests/test_health.py`) and live HTTP curl.
+  - Configured FastAPI application with strict loopback binding (`127.0.0.1:8000`), CORS allowlisting (`5173`, `3000`), and startup lifespan database initialization.
+  - Integrated `checkBackendHealth` in frontend `src/services/api.ts` and added runtime status indicators across both Hero and Results views in `src/App.tsx`.
+  - Verified frontend build (`tsc -b && vite build`) and running dev server (`http://localhost:5173/`).
+
 ## [0.1.0-spec] - 2026-10-11
 
 ### Added
