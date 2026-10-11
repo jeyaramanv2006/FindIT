@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Path traversal confinement: `OSService` verifies physical file existence within registered directories in SQLite, raising `SecurityBoundaryError` for unauthorized system path escapes and `FileNotFoundError` for missing paths.
     - Latency benchmarking: benchmarked 1,000 indexed passages across 20 hybrid search queries, achieving mean latency of **29.36 ms** (p95: 32.95 ms), well under the strict 100ms threshold.
     - Global exception handling middleware: structured JSON envelopes for 404 Not Found, 422 Unprocessable Entity, and 500 Internal Server Error.
+    - Temporary file defense: Hardened scanner to ignore Microsoft Office temporary lock files (`~$*`) and Unix dotfiles (`.*`) in `ScannerService` and `DirectoryService`.
   - Added global error-handling middleware in `backend/app/main.py`.
   - Added `MAX_FILE_SIZE_BYTES = 50MB` setting in `backend/app/core/config.py`.
   - Upgraded `OSService.validate_path_confinement` to normalize both `str` and `Path` inputs.

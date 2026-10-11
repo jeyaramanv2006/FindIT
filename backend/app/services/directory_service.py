@@ -131,6 +131,10 @@ class DirectoryService:
                         logger.warning(f"Skipping symlink escaping directory boundary: {file_path}")
                         continue
 
+                # Ignore hidden files, system dotfiles, and Office lock files (~$*)
+                if file_name.startswith("~$") or file_name.startswith("."):
+                    continue
+
                 ext = file_path.suffix.lower()
                 if ext not in config.SUPPORTED_EXTENSIONS:
                     continue
